@@ -213,7 +213,7 @@
 </div>
 
 <script>
-    // --- AUTH GATEKEEPER ---
+    // --- AUTH GATEKEEPER (ADMIN ONLY) ---
     const firebaseConfig = {
         apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
         authDomain: "mock-test-1eea6.firebaseapp.com",
@@ -231,6 +231,14 @@
     firebase.auth().onAuthStateChanged((user) => {
         if (!user) {
             window.location.replace("login.html");
+        } else {
+            // শুধুমাত্র আপনার ইমেইলকেই অনুমতি দেওয়া হবে
+            const adminEmail = "avijitmaity150@gmail.com"; 
+            
+            if(user.email !== adminEmail) {
+                alert("Access Denied! শুধুমাত্র অ্যাডমিন এখানে প্রবেশ করতে পারবেন।");
+                window.location.replace("index.html"); 
+            }
         }
     });
 
@@ -252,7 +260,6 @@
         const data = snapshot.val();
         
         if(data) {
-            // Reverse data so the newest entries are first
             allData = Object.entries(data).reverse();
             const vals = Object.values(data);
             const uniqueCats = [...new Set(vals.map(i => i.category))];
@@ -272,24 +279,16 @@
         
         if(!catInput) return;
 
-        // allData is already reversed (newest first). 
-        // So .find() will give us the LATEST entry for this exam name.
         const foundItem = allData.find(([key, val]) => val.category === catInput);
 
         if(foundItem) {
             const val = foundItem[1];
-
-            // 1. Auto-Fill Icon (As before)
             if(val.icon && val.icon.length > 10) {
                 const iconUrl = val.icon;
                 imgPreview.src = iconUrl;
                 imgPreview.style.display = "block";
                 existingIconInput.value = iconUrl; 
             }
-
-            // 2. Auto-Fill Smart Data (Tab, Menu, Sub-filter)
-            // এটি সেই ফিচার যা আপনি চেয়েছিলেন - অটোমেটিক লেখা চলে আসা
-            // এটি কেবল ভ্যালু বসাবে, আপনি চাইলে এডিট করতে পারবেন
             document.getElementById('topTabInput').value = val.topTab || "Mock Tests";
             document.getElementById('menuName').value = val.subject || "";
             document.getElementById('subFilter').value = val.subFilter || "";
