@@ -3,67 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Exam Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Login Check</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 350px; text-align: center; }
-        .logo { font-size: 26px; font-weight: 800; color: #4361ee; margin-bottom: 10px; display: block; }
-        .google-btn { width: 100%; padding: 12px; background: white; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .google-btn:hover { background: #f8f9fa; border-color: #c1c1c1; }
-        .google-btn img { width: 20px; height: 20px; }
-        #errorMsg { color: #ef233c; font-size: 14px; margin-top: 15px; display: none; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        .google-btn { padding: 15px; background: #4285F4; color: white; border: none; border-radius: 5px; font-size: 16px; width: 100%; cursor: pointer; }
+        /* এরর দেখানোর জন্য বক্স */
+        #statusBox { 
+            margin-top: 20px; 
+            padding: 10px; 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+            text-align: left; 
+            font-size: 13px;
+            display: none; /* প্রথমে লুকানো থাকবে */
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <span class="logo">Exam Portal</span>
-    <p style="color:#666; font-size:14px; margin-bottom:30px;">পরীক্ষা দিতে নিচে ক্লিক করুন</p>
-    
-    <button class="google-btn" onclick="googleLogin()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-        Google দিয়ে লগইন করুন
-    </button>
-    
-    <div id="errorMsg"></div>
-</div>
+    <h2>Login Testing Mode</h2>
+    <p>নিচের বাটনে ক্লিক করুন। যদি কোনো সমস্যা হয়, নিচে লেখা আসবে।</p>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
-        authDomain: "mock-test-1eea6.firebaseapp.com",
-        projectId: "mock-test-1eea6",
-        appId: "1:111849173136:web:8b211f58d854119e88a815"
-    };
+    <button class="google-btn" onclick="startLogin()">Google Login (Redirect)</button>
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    <div id="statusBox">Loading...</div>
 
-    // 1. লগইন স্ট্যাটাস চেক (Redirect হয়ে ফিরে আসার পর এটি কাজ করবে)
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            window.location.replace("index.html");
+    <script>
+        // আপনার কনফিগ
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
+            authDomain: "mock-test-1eea6.firebaseapp.com",
+            projectId: "mock-test-1eea6",
+            appId: "1:111849173136:web:8b211f58d854119e88a815"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const statusBox = document.getElementById('statusBox');
+
+        function log(msg) {
+            statusBox.style.display = 'block';
+            statusBox.innerHTML += msg + "<br><hr>";
         }
-    });
 
-    // 2. এরর হ্যান্ডলিং (Redirect থেকে কোনো এরর এলে এখানে ধরা পড়বে)
-    auth.getRedirectResult().catch((error) => {
-        document.getElementById('errorMsg').style.display = 'block';
-        document.getElementById('errorMsg').innerText = "সমস্যা হয়েছে: " + error.message;
-    });
+        // ১. পেজ লোড হওয়ার সাথে সাথে চেক করা হচ্ছে
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                log("✅ User Found: " + user.email);
+                log("Redirecting to index.html...");
+                setTimeout(() => window.location.replace("index.html"), 1000);
+            } else {
+                log("ℹ️ No User Logged in yet.");
+            }
+        });
 
-    // 3. নতুন লগইন ফাংশন (Popup এর বদলে Redirect)
-    function googleLogin() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        // এটি পেজ রিফ্রেশ করে গুগলে নিয়ে যাবে, পপআপ খুলবে না
-        auth.signInWithRedirect(provider);
-    }
-</script>
+        // ২. রিডাইরেক্ট থেকে ফিরে আসার পর কোনো এরর হয়েছে কি না দেখা
+        auth.getRedirectResult()
+            .then((result) => {
+                if (result.credential) {
+                    log("✅ Redirect Successful!");
+                }
+            })
+            .catch((error) => {
+                log("❌ ERROR: " + error.code);
+                log("Message: " + error.message);
+            });
 
+        // ৩. লগইন ফাংশন
+        function startLogin() {
+            log("⏳ Starting Redirect...");
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        }
+    </script>
 </body>
 </html>
