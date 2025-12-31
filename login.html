@@ -3,79 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Exam Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    
+    <title>Exam Login</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; }
-        .login-card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 350px; text-align: center; }
-        .logo { font-size: 26px; font-weight: 800; color: #4361ee; margin-bottom: 10px; display: block; }
-        .google-btn { width: 100%; padding: 12px; background: white; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .google-btn:hover { background: #f8f9fa; border-color: #c1c1c1; }
-        #errorMsg { color: #ef233c; font-size: 13px; margin-top: 15px; display: none; text-align: left; background: #fff0f0; padding: 10px; border-radius: 5px;}
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f4f4; }
+        button { padding: 15px 30px; font-size: 16px; background: white; border: 1px solid #ccc; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <span class="logo">Exam Portal</span>
-    <p style="color:#666; font-size:14px; margin-bottom:30px;">পরীক্ষা দিতে নিচে ক্লিক করুন</p>
-    
-    <button class="google-btn" onclick="googleLogin()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;">
-        Google দিয়ে লগইন করুন
-    </button>
-    
-    <div id="errorMsg"></div>
-</div>
+    <button onclick="login()">Google Login</button>
+    <p id="msg" style="position:absolute; bottom:20px; color:red;"></p>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
-        authDomain: "mock-test-1eea6.firebaseapp.com",
-        projectId: "mock-test-1eea6",
-        appId: "1:111849173136:web:8b211f58d854119e88a815"
-    };
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
+            authDomain: "mock-test-1eea6.firebaseapp.com",
+            projectId: "mock-test-1eea6",
+            appId: "1:111849173136:web:8b211f58d854119e88a815"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+        // 1. লগইন চেক
+        auth.onAuthStateChanged(user => {
+            if (user) window.location.replace("index.html");
+        });
 
-    // 1. পেজ লোড হওয়ার সাথে সাথেই সেশন লোকাল করে নেওয়া হচ্ছে (যাতে ক্লিকের সময় দেরি না হয়)
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        // 2. মোবাইল এরর দেখার জন্য
+        auth.getRedirectResult().catch(err => {
+            document.getElementById('msg').innerText = err.message;
+        });
 
-    // 2. লগইন স্ট্যাটাস চেক
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            // লগইন সফল হলে index.html এ যাবে
-            window.location.replace("index.html");
+        // 3. লগইন ফাংশন (Redirect)
+        function login() {
+            auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
         }
-    });
-
-    // 3. ডাইরেক্ট পপ-আপ ফাংশন
-    function googleLogin() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        const errorDiv = document.getElementById('errorMsg');
-        
-        // এখানে কোনো .then() বা দেরি করা হচ্ছে না, সরাসরি পপ-আপ খোলা হচ্ছে
-        auth.signInWithPopup(provider)
-            .then((result) => {
-                // সফল! onAuthStateChanged বাকিটা সামলাবে
-            })
-            .catch((error) => {
-                console.error(error);
-                errorDiv.style.display = 'block';
-                // যদি তাও পপ-আপ ব্লক হয়, তবেই ওয়ার্নিং দেখাবে
-                if(error.code === 'auth/popup-blocked') {
-                    errorDiv.innerHTML = "<b>পপ-আপ ব্লক হয়েছে!</b><br>দয়া করে আপনার ব্রাউজারের Settings থেকে Pop-ups allow করুন অথবা 'Open in Chrome' ব্যবহার করুন।";
-                } else {
-                    errorDiv.innerText = "এরর: " + error.message;
-                }
-            });
-    }
-</script>
-
+    </script>
 </body>
 </html>
