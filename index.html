@@ -14,23 +14,11 @@
     
     <style>
         :root { --primary: #00b0ff; --bg: #f2f4f8; --success: #00c696; --warning: #ff9f43; --danger: #ff4757; }
-
-        html, body {
-            overscroll-behavior-y: contain;
-            height: 100%;
-            overflow-x: hidden;
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; 
-            color: #1e293b; user-select: none; -webkit-tap-highlight-color: transparent; 
-        }
-        
+        html, body { overscroll-behavior-y: contain; height: 100%; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: #1e293b; user-select: none; -webkit-tap-highlight-color: transparent; }
         header { background: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
         .logo-text { font-weight: 800; font-size: 1.2rem; color: #4361ee; }
         .header-icons { display: flex; gap: 15px; align-items: center; }
-        
-        /* Grid & Boxes */
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; }
         .box { background: white; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid white; position: relative; }
         .box img { width: 50px; height: 50px; margin-bottom: 10px; border-radius: 10px; }
@@ -38,13 +26,9 @@
         .box.locked { opacity: 0.7; }
         .lock-icon { position: absolute; top: 10px; right: 10px; color: #ff4757; display: none; }
         .box.locked .lock-icon { display: block; }
-
-        /* Sheet */
         .sheet { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f8f9fa; z-index: 99999; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
         .sheet.active { transform: translateX(0); }
         .sheet-header { background: white; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee; }
-        
-        /* Navigation Tabs */
         .top-tabs { display: flex; gap: 10px; padding: 15px 20px 5px 20px; background: white; }
         .pill-btn { padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid #eee; color: #64748b; }
         .pill-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
@@ -55,26 +39,17 @@
         .sub-filters { display: flex; gap: 8px; overflow-x: auto; padding: 15px 20px 5px 20px; scrollbar-width: none; display: none; }
         .chip { background: white; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; color: #555; border: 1px solid #ddd; cursor: pointer; white-space: nowrap; }
         .chip.active { background: #333; color: white; border-color: #333; }
-
-        /* --- NEW STYLES FOR STEP 4 --- */
         .list { overflow-y: auto; flex-grow: 1; padding: 15px 20px 80px 20px; }
-        
-        /* Suggested Box */
         .suggested-section { padding: 0 20px; margin-top: 15px; display: none; }
         .suggested-card { background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #bbdefb; }
         .sug-badge { font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-bottom: 5px; display: inline-block; }
         .badge-resume { background: #ff9f43; color: white; }
         .badge-next { background: #00b0ff; color: white; }
-        
-        /* Test Card Dynamic Styles */
         .test-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border-left: 4px solid transparent; }
         .test-card.status-ongoing { border-left-color: var(--warning); background: #fffbf7; }
         .test-card.status-completed { border-left-color: var(--success); background: #f0fdf4; }
-        
         .card-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .card-meta { display: flex; gap: 10px; font-size: 0.75rem; color: #666; margin-top: 5px; }
-        
-        /* Smart Buttons */
         .action-btn { padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; font-size: 0.85rem; cursor: pointer; border: none; display: inline-block; }
         .btn-start { background: var(--primary); color: white; }
         .btn-resume { background: var(--warning); color: white; }
@@ -101,20 +76,16 @@
         <i class="fas fa-arrow-left back-btn" onclick="goBack()"></i>
         <span style="font-weight:bold; font-size:1.1rem; flex-grow:1;" id="sheetTitle">Exam Name</span>
     </div>
-    
     <div class="top-tabs" id="topTabsContainer"></div>
-    <div class="tabs-wrapper">
-        <div class="tabs" id="mainMenuContainer"></div>
-    </div>
+    <div class="tabs-wrapper"><div class="tabs" id="mainMenuContainer"></div></div>
     <div class="sub-filters" id="subFilterContainer"></div>
-
     <div class="suggested-section" id="suggestedBox"></div>
-
     <div class="list" id="listContainer"></div>
 </div>
 
 <script>
     // --- AUTH & CONFIG ---
+    // এই কনফিগটি login.html এর সাথে হুবহু এক হতে হবে
     const firebaseConfig = {
         apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
         authDomain: "mock-test-1eea6.firebaseapp.com",
@@ -129,55 +100,50 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // Gatekeeper
+    // Gatekeeper (Security Check)
     firebase.auth().onAuthStateChanged((user) => {
         if (!user) {
+            // ইউজার না থাকলে লগইন পেজে পাঠাও
             window.location.replace("login.html");
         } else {
+            // ইউজার থাকলে তার আইডি সেভ করো এবং লোড শুরু করো
             window.userUID = user.uid;
-            loadUserProgress(); // Start loading user data
+            loadUserProgress();
         }
     });
 
     function logoutApp() {
-        if(confirm("Logout?")) firebase.auth().signOut().then(() => window.location.replace("login.html"));
+        if(confirm("আপনি কি লগআউট করতে চান?")) {
+            firebase.auth().signOut().then(() => window.location.replace("login.html"));
+        }
     }
 
-    // --- DATA LOADING ---
+    // --- DATA LOADING & LOGIC ---
     let allExamData = [];
-    let userProgressData = {}; // Stores user's progress for all exams
+    let userProgressData = {};
 
-    // 1. Load User Progress Realtime
     function loadUserProgress() {
         if(!window.userUID) return;
         db.ref('users/' + window.userUID + '/progress').on('value', (snapshot) => {
             userProgressData = snapshot.val() || {};
-            // If we are already inside a sheet, re-render to show updates
             if(document.getElementById('sheet').classList.contains('active')) {
                 renderListWithLogic();
             }
         });
     }
 
-    // 2. Load Exams
     db.ref('exams').on('value', (snapshot) => {
         const data = snapshot.val();
         const grid = document.getElementById('examGrid');
         grid.innerHTML = "";
-        
         if(!data) { grid.innerHTML = "<div>No Data</div>"; return; }
-        
-        // Convert to array and save globally
         allExamData = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
-        
         const uniqueExams = [...new Set(allExamData.map(item => item.category))];
-
         uniqueExams.forEach(cat => {
             const catItems = allExamData.filter(d => d.category === cat);
             const isLocked = catItems.some(i => i.locked === true);
             const item = catItems[0];
             let icon = item.icon || "https://cdn-icons-png.flaticon.com/512/2995/2995620.png";
-            
             grid.innerHTML += `
                 <div class="box ${isLocked?'locked':''}" onclick="handleBoxClick('${cat}')">
                     <img src="${icon}">
@@ -187,15 +153,13 @@
         });
     });
 
-    // --- NAVIGATION LOGIC ---
-    let currentFilteredList = []; // Stores currently viewed list
+    let currentFilteredList = [];
     let currentExam = "", currentTopTab = "", currentMenu = "", currentSub = "ALL";
 
     function handleBoxClick(cat) {
         triggerFullScreen();
         const catItems = allExamData.filter(d => d.category === cat);
         if(catItems.some(i => i.locked)) return alert("🔒 Locked by Admin");
-        
         openSheet(cat);
         window.history.pushState({page: "sheet"}, "", "#"+cat);
     }
@@ -204,16 +168,13 @@
         currentExam = cat;
         document.getElementById('sheetTitle').innerText = cat;
         document.getElementById('sheet').classList.add('active');
-        
         const examData = allExamData.filter(d => d.category === cat);
         const topTabs = [...new Set(examData.map(d => d.topTab || "Mock Tests"))]; 
-        
         const topCont = document.getElementById('topTabsContainer');
         topCont.innerHTML = "";
         topTabs.forEach((tab, idx) => {
             topCont.innerHTML += `<div class="pill-btn ${idx===0?'active':''}" onclick="selectTopTab('${tab}', this)">${tab}</div>`;
         });
-
         if(topTabs.length > 0) selectTopTab(topTabs[0], document.querySelector('.pill-btn'));
     }
 
@@ -221,16 +182,13 @@
         currentTopTab = tab;
         document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
         if(el) el.classList.add('active');
-
         const filtered = allExamData.filter(d => d.category === currentExam && (d.topTab || "Mock Tests") === tab);
         const menus = [...new Set(filtered.map(d => d.subject))];
-
         const menuCont = document.getElementById('mainMenuContainer');
         menuCont.innerHTML = "";
         menus.forEach((m, idx) => {
             menuCont.innerHTML += `<div class="tab-link ${idx===0?'active':''}" onclick="selectMenu('${m}', this)">${m}</div>`;
         });
-
         if(menus.length > 0) selectMenu(menus[0], document.querySelector('.tab-link'));
         else renderListWithLogic([]);
     }
@@ -239,12 +197,10 @@
         currentMenu = menu;
         document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
         if(el) el.classList.add('active');
-
         const filtered = allExamData.filter(d => d.category === currentExam && (d.topTab || "Mock Tests") === currentTopTab && d.subject === menu);
         const subFilters = [...new Set(filtered.map(d => d.subFilter).filter(s => s))];
         const subCont = document.getElementById('subFilterContainer');
         subCont.innerHTML = "";
-
         if (subFilters.length > 0) {
             subCont.style.display = 'flex';
             subCont.innerHTML = `<div class="chip active" onclick="selectSub('ALL', this)">All</div>`;
@@ -263,20 +219,16 @@
         currentSub = sub;
         document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
         if(el) el.classList.add('active');
-        
         let filtered = allExamData.filter(d => d.category === currentExam && (d.topTab || "Mock Tests") === currentTopTab && d.subject === currentMenu);
         if (sub !== 'ALL') filtered = filtered.filter(d => d.subFilter === sub);
-        
         currentFilteredList = filtered;
         renderListWithLogic();
     }
 
-    // --- MAIN RENDER LOGIC (Suggested + List) ---
     function renderListWithLogic() {
-        const listItems = currentFilteredList; // Use the global filtered list
+        const listItems = currentFilteredList;
         const listContainer = document.getElementById('listContainer');
         const suggestBox = document.getElementById('suggestedBox');
-        
         listContainer.innerHTML = "";
         suggestBox.innerHTML = "";
         suggestBox.style.display = "none";
@@ -286,49 +238,35 @@
             return;
         }
 
-        // --- 1. Identify Test Status ---
-        // We sort the list naturally (assuming database sends ordered data or we rely on chapter names)
-        // You can add .sort() here if needed based on chapter name string
-        
         let resumeItem = null;
         let nextStartItem = null;
         let lastCompletedIndex = -1;
 
-        // Process List Items
         listItems.forEach((item, index) => {
-            const prog = userProgressData[item.id]; // Check progress from Firebase data
+            const prog = userProgressData[item.id];
             let statusClass = "";
             let btnHTML = "";
             let metaHTML = "";
 
             if (prog && prog.status === 'ongoing') {
-                // RESUME STATE
                 statusClass = "status-ongoing";
                 btnHTML = `<a href="exam.html?id=${item.id}" class="action-btn btn-resume">Resume Now</a>`;
                 metaHTML = `<span style="color:#e67e22;">Paused: ${Math.floor(prog.timeLeft/60)}m left</span>`;
-                resumeItem = item; // Found a resume candidate
-
+                resumeItem = item; 
             } else if (prog && prog.status === 'completed') {
-                // COMPLETED STATE
                 statusClass = "status-completed";
-                lastCompletedIndex = index; // Track last finished test
-                
-                // Score Calculation for Display
+                lastCompletedIndex = index;
                 const score = prog.score || 0;
-                let badgeColor = parseFloat(score) >= 30 ? "#27ae60" : "#c0392b"; // Simple Pass/Fail color logic
-                
+                let badgeColor = parseFloat(score) >= 30 ? "#27ae60" : "#c0392b";
                 btnHTML = `
-                    <a href="quiz-maker.html?id=${item.id}&mode=solution" onclick="alert('Analysis Feature Coming Soon!'); return false;" class="action-btn btn-solution">Solution</a>
+                    <a href="quiz-maker.html?id=${item.id}&mode=solution" onclick="alert('Solution coming soon!'); return false;" class="action-btn btn-solution">Solution</a>
                     <a href="#" class="action-btn btn-analysis">Analysis</a>
                 `;
                 metaHTML = `<span style="color:${badgeColor}; font-weight:bold;">Score: ${score}</span>`;
-
             } else {
-                // START STATE
                 btnHTML = `<a href="${item.link}" class="action-btn btn-start">Start Now</a>`;
             }
 
-            // Render Main List Card
             listContainer.innerHTML += `
                 <div class="test-card ${statusClass}">
                     <div class="card-top">
@@ -339,22 +277,16 @@
                         </div>
                         <div>${btnHTML}</div>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
 
-        // --- 2. Calculate Suggested Box Logic ---
-        
-        // Logic A: Next Test (Item immediately after the last completed one)
         if (lastCompletedIndex + 1 < listItems.length) {
             const nextItem = listItems[lastCompletedIndex + 1];
-            // Only suggest if it's NOT already ongoing (ongoing handles itself)
             const nextProg = userProgressData[nextItem.id];
             if (!nextProg || nextProg.status !== 'ongoing') {
                 nextStartItem = nextItem;
             }
         } else if (lastCompletedIndex === -1 && listItems.length > 0) {
-            // If nothing completed, suggest the first one (if not ongoing)
             const firstItem = listItems[0];
             const firstProg = userProgressData[firstItem.id];
             if (!firstProg || firstProg.status !== 'ongoing') {
@@ -362,35 +294,20 @@
             }
         }
 
-        // --- 3. Render Suggested Box ---
         let suggestedHTML = "";
-
-        // Priority 1: Resume Pending
         if (resumeItem) {
             suggestedHTML += `
                 <div class="suggested-card" style="border-left: 4px solid #ff9f43;">
-                    <div>
-                        <span class="sug-badge badge-resume">Resume Pending</span>
-                        <div class="card-title">${resumeItem.chapter}</div>
-                        <small>You left it unfinished!</small>
-                    </div>
+                    <div><span class="sug-badge badge-resume">Resume Pending</span><div class="card-title">${resumeItem.chapter}</div></div>
                     <a href="exam.html?id=${resumeItem.id}" class="action-btn btn-resume">Resume</a>
-                </div>
-            `;
+                </div>`;
         }
-
-        // Priority 2: Next Test (Only if exists)
         if (nextStartItem) {
             suggestedHTML += `
                 <div class="suggested-card" style="border-left: 4px solid #00b0ff;">
-                    <div>
-                        <span class="sug-badge badge-next">Suggested For You</span>
-                        <div class="card-title">${nextStartItem.chapter}</div>
-                        <small>Based on your progress</small>
-                    </div>
+                    <div><span class="sug-badge badge-next">Suggested For You</span><div class="card-title">${nextStartItem.chapter}</div></div>
                     <a href="${nextStartItem.link}" class="action-btn btn-start">Start</a>
-                </div>
-            `;
+                </div>`;
         }
 
         if (suggestedHTML !== "") {
@@ -399,7 +316,6 @@
         }
     }
 
-    // --- UTILS ---
     function triggerFullScreen() {
         const elem = document.documentElement;
         if (!document.fullscreenElement && elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
@@ -408,9 +324,7 @@
         if (!document.fullscreenElement) triggerFullScreen();
         else if (document.exitFullscreen) document.exitFullscreen();
     }
-    window.goBack = function() {
-        document.getElementById('sheet').classList.remove('active');
-    }
+    window.goBack = function() { document.getElementById('sheet').classList.remove('active'); }
     history.pushState(null, document.title, location.href);
     window.addEventListener('popstate', function (event) {
         if(document.getElementById('sheet').classList.contains('active')) goBack();
