@@ -3,83 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Check</title>
+    <title>Login - Exam Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        body { font-family: sans-serif; padding: 20px; text-align: center; }
-        .google-btn { padding: 15px; background: #4285F4; color: white; border: none; border-radius: 5px; font-size: 16px; width: 100%; cursor: pointer; }
-        /* এরর দেখানোর জন্য বক্স */
-        #statusBox { 
-            margin-top: 20px; 
-            padding: 10px; 
-            background: #f8d7da; 
-            color: #721c24; 
-            border: 1px solid #f5c6cb; 
-            text-align: left; 
-            font-size: 13px;
-            display: none; /* প্রথমে লুকানো থাকবে */
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; }
+        .login-card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 350px; text-align: center; }
+        .logo { font-size: 26px; font-weight: 800; color: #4361ee; margin-bottom: 10px; display: block; }
+        
+        /* Google Button Style */
+        .google-btn { width: 100%; padding: 12px; background: white; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .google-btn:hover { background: #f8f9fa; border-color: #c1c1c1; }
+        
+        /* Warning Box Style */
+        #browserWarning { 
+            display: none; /* শুরুতে লুকানো থাকবে */
+            background: #fff3cd; 
+            color: #856404; 
+            padding: 15px; 
+            border: 1px solid #ffeeba; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            line-height: 1.6;
+            margin-top: 10px;
         }
+        .instruction-step { text-align: left; margin-top: 10px; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <h2>Login Testing Mode</h2>
-    <p>নিচের বাটনে ক্লিক করুন। যদি কোনো সমস্যা হয়, নিচে লেখা আসবে।</p>
+<div class="login-card">
+    <span class="logo">Exam Portal</span>
+    
+    <div id="loginSection">
+        <p style="color:#666; font-size:14px; margin-bottom:30px;">পরীক্ষা দিতে নিচে ক্লিক করুন</p>
+        <button class="google-btn" onclick="googleLogin()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;">
+            Google দিয়ে লগইন করুন
+        </button>
+    </div>
 
-    <button class="google-btn" onclick="startLogin()">Google Login (Redirect)</button>
+    <div id="browserWarning">
+        <strong>⚠️ সতর্কতা!</strong><br>
+        আপনি হোয়াটসঅ্যাপ বা ফেসবুক ব্রাউজার ব্যবহার করছেন। এখানে লগইন কাজ করবে না।
+        <div class="instruction-step">
+            পরীক্ষা দিতে:<br>
+            ১. ওপরের ডানদিকের <b>তিনটি ডট (⋮)</b> এ ক্লিক করুন।<br>
+            ২. <b>"Open in Chrome"</b> বা <b>"Open Browser"</b> সিলেক্ট করুন।
+        </div>
+    </div>
+    
+    <div id="errorMsg" style="color:red; font-size:13px; margin-top:10px; display:none;"></div>
+</div>
 
-    <div id="statusBox">Loading...</div>
+<script>
+    // --- In-App Browser Detection ---
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    // হোয়াটসঅ্যাপ, ফেসবুক বা ইনস্টাগ্রাম ডিটেক্ট করা হচ্ছে
+    const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("WhatsApp") > -1);
 
-    <script>
-        // আপনার কনফিগ
-        const firebaseConfig = {
-            apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
-            authDomain: "mock-test-1eea6.firebaseapp.com",
-            projectId: "mock-test-1eea6",
-            appId: "1:111849173136:web:8b211f58d854119e88a815"
-        };
+    if (isInApp) {
+        // যদি ইন-অ্যাপ ব্রাউজার হয়, লগইন বাটন লুকিয়ে ওয়ার্নিং দেখাও
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('browserWarning').style.display = 'block';
+    }
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const statusBox = document.getElementById('statusBox');
+    // --- Firebase Config ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
+        authDomain: "mock-test-1eea6.firebaseapp.com",
+        projectId: "mock-test-1eea6",
+        appId: "1:111849173136:web:8b211f58d854119e88a815"
+    };
 
-        function log(msg) {
-            statusBox.style.display = 'block';
-            statusBox.innerHTML += msg + "<br><hr>";
-        }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-        // ১. পেজ লোড হওয়ার সাথে সাথে চেক করা হচ্ছে
+    // Persistence সেট করা (ক্রোমে সেশন ধরে রাখার জন্য)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
         auth.onAuthStateChanged(user => {
-            if (user) {
-                log("✅ User Found: " + user.email);
-                log("Redirecting to index.html...");
-                setTimeout(() => window.location.replace("index.html"), 1000);
-            } else {
-                log("ℹ️ No User Logged in yet.");
-            }
+            if (user) window.location.replace("index.html");
         });
+    });
 
-        // ২. রিডাইরেক্ট থেকে ফিরে আসার পর কোনো এরর হয়েছে কি না দেখা
-        auth.getRedirectResult()
-            .then((result) => {
-                if (result.credential) {
-                    log("✅ Redirect Successful!");
-                }
-            })
-            .catch((error) => {
-                log("❌ ERROR: " + error.code);
-                log("Message: " + error.message);
-            });
+    function googleLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithRedirect(provider);
+    }
+</script>
 
-        // ৩. লগইন ফাংশন
-        function startLogin() {
-            log("⏳ Starting Redirect...");
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
-        }
-    </script>
 </body>
 </html>
