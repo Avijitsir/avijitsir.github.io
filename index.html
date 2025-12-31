@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Utkarsh Exam Portal</title>
+    <title>Exam Portal</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -13,323 +13,153 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
-        :root { --primary: #00b0ff; --bg: #f2f4f8; --success: #00c696; --warning: #ff9f43; --danger: #ff4757; }
-        html, body { overscroll-behavior-y: contain; height: 100%; overflow-x: hidden; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: #1e293b; user-select: none; -webkit-tap-highlight-color: transparent; }
+        :root { --primary: #00b0ff; --bg: #f2f4f8; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: #1e293b; user-select: none; }
+        
+        /* --- ১. লগইন স্ক্রিন ডিজাইন --- */
+        #login-view {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100vh; padding: 20px; text-align: center;
+        }
+        .login-card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 350px; }
+        .logo { font-size: 26px; font-weight: 800; color: #4361ee; margin-bottom: 10px; display: block; }
+        .google-btn { width: 100%; padding: 12px; background: white; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .google-btn:hover { background: #f8f9fa; }
+
+        /* --- ২. ড্যাশবোর্ড স্ক্রিন ডিজাইন (লুকানো থাকবে) --- */
+        #dashboard-view { display: none; padding-bottom: 50px; }
         header { background: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
-        .logo-text { font-weight: 800; font-size: 1.2rem; color: #4361ee; }
-        .header-icons { display: flex; gap: 15px; align-items: center; }
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; }
-        .box { background: white; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid white; position: relative; }
-        .box img { width: 50px; height: 50px; margin-bottom: 10px; border-radius: 10px; }
+        .box { background: white; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative; }
+        .box img { width: 50px; height: 50px; margin-bottom: 10px; }
         .box-title { font-weight: 700; font-size: 0.95rem; }
-        .box.locked { opacity: 0.7; }
-        .lock-icon { position: absolute; top: 10px; right: 10px; color: #ff4757; display: none; }
-        .box.locked .lock-icon { display: block; }
-        .sheet { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f8f9fa; z-index: 99999; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        .sheet.active { transform: translateX(0); }
-        .sheet-header { background: white; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee; }
-        .top-tabs { display: flex; gap: 10px; padding: 15px 20px 5px 20px; background: white; }
-        .pill-btn { padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid #eee; color: #64748b; }
-        .pill-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .tabs-wrapper { background: white; box-shadow: 0 4px 5px rgba(0,0,0,0.02); }
-        .tabs { display: flex; gap: 20px; overflow-x: auto; padding: 10px 20px 0 20px; scrollbar-width: none; border-bottom: 1px solid #f0f0f0; }
-        .tab-link { font-size: 0.9rem; font-weight: 600; color: #64748b; white-space: nowrap; cursor: pointer; padding-bottom: 10px; border-bottom: 3px solid transparent; }
-        .tab-link.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .sub-filters { display: flex; gap: 8px; overflow-x: auto; padding: 15px 20px 5px 20px; scrollbar-width: none; display: none; }
-        .chip { background: white; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; color: #555; border: 1px solid #ddd; cursor: pointer; white-space: nowrap; }
-        .chip.active { background: #333; color: white; border-color: #333; }
-        .list { overflow-y: auto; flex-grow: 1; padding: 15px 20px 80px 20px; }
-        .suggested-section { padding: 0 20px; margin-top: 15px; display: none; }
-        .suggested-card { background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #bbdefb; }
-        .sug-badge { font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-bottom: 5px; display: inline-block; }
-        .badge-resume { background: #ff9f43; color: white; }
-        .badge-next { background: #00b0ff; color: white; }
-        .test-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border-left: 4px solid transparent; }
-        .test-card.status-ongoing { border-left-color: var(--warning); background: #fffbf7; }
-        .test-card.status-completed { border-left-color: var(--success); background: #f0fdf4; }
-        .card-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .card-meta { display: flex; gap: 10px; font-size: 0.75rem; color: #666; margin-top: 5px; }
-        .action-btn { padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; font-size: 0.85rem; cursor: pointer; border: none; display: inline-block; }
-        .btn-start { background: var(--primary); color: white; }
-        .btn-resume { background: var(--warning); color: white; }
-        .btn-analysis { background: var(--success); color: white; }
-        .btn-solution { background: white; border: 1px solid var(--success); color: var(--success); margin-right: 5px; }
+
+        /* লোডিং স্পিনার */
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #4361ee; }
     </style>
 </head>
 <body>
 
-<header>
-    <span class="logo-text">Exam Portal</span>
-    <div class="header-icons">
-        <i class="fas fa-expand" onclick="toggleFullScreen()" style="color:#333; cursor:pointer;"></i>
-        <i class="fas fa-sign-out-alt" onclick="logoutApp()" style="color:#ff4757; cursor:pointer;"></i>
-    </div>
-</header>
+    <div id="loading">লোড হচ্ছে...</div>
 
-<div class="grid" id="examGrid">
-    <div style="grid-column:span 2; text-align:center; margin-top:50px; color:#888;">লোডিং হচ্ছে...</div>
-</div>
-
-<div class="sheet" id="sheet">
-    <div class="sheet-header">
-        <i class="fas fa-arrow-left back-btn" onclick="goBack()"></i>
-        <span style="font-weight:bold; font-size:1.1rem; flex-grow:1;" id="sheetTitle">Exam Name</span>
+    <div id="login-view">
+        <div class="login-card">
+            <span class="logo">Exam Portal</span>
+            <p style="color:#666; font-size:14px; margin-bottom:30px;">পরীক্ষা দিতে নিচে ক্লিক করুন</p>
+            <button class="google-btn" onclick="startLogin()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style="width:20px;">
+                Google Login
+            </button>
+            <p id="error-msg" style="color:red; font-size:12px; margin-top:15px; display:none;"></p>
+        </div>
     </div>
-    <div class="top-tabs" id="topTabsContainer"></div>
-    <div class="tabs-wrapper"><div class="tabs" id="mainMenuContainer"></div></div>
-    <div class="sub-filters" id="subFilterContainer"></div>
-    <div class="suggested-section" id="suggestedBox"></div>
-    <div class="list" id="listContainer"></div>
-</div>
+
+    <div id="dashboard-view">
+        <header>
+            <span class="logo" style="font-size:1.2rem; margin:0;">Exam Portal</span>
+            <i class="fas fa-sign-out-alt" onclick="logout()" style="color:#ff4757; cursor:pointer; font-size:1.2rem;"></i>
+        </header>
+
+        <div class="grid" id="examGrid">
+            <div style="grid-column:span 2; text-align:center; margin-top:50px; color:#888;">তথ্য লোড হচ্ছে...</div>
+        </div>
+    </div>
 
 <script>
-    // --- AUTH & CONFIG ---
-    // এই কনফিগটি login.html এর সাথে হুবহু এক হতে হবে
+    // --- কনফিগ ---
     const firebaseConfig = {
         apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
         authDomain: "mock-test-1eea6.firebaseapp.com",
         databaseURL: "https://mock-test-1eea6-default-rtdb.firebaseio.com",
         projectId: "mock-test-1eea6",
-        storageBucket: "mock-test-1eea6.firebaseapp.com",
-        messagingSenderId: "111849173136",
-        appId: "1:111849173136:web:8b211f58d854119e88a815",
-        measurementId: "G-5RLWPTP8YD"
+        appId: "1:111849173136:web:8b211f58d854119e88a815"
     };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.database();
-    
-    // Gatekeeper (Security Check)
-    firebase.auth().onAuthStateChanged((user) => {
-        if (!user) {
-            // ইউজার না থাকলে লগইন পেজে পাঠাও
-            window.location.replace("login.html");
+
+    // --- দৃশ্য পরিবর্তন লজিক ---
+    function showDashboard(user) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'block';
+        loadExamData(); // এক্সাম লোড শুরু
+    }
+
+    function showLogin() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'none';
+        document.getElementById('login-view').style.display = 'flex';
+    }
+
+    // --- অথেন্টিকেশন চেক ---
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            showDashboard(user);
         } else {
-            // ইউজার থাকলে তার আইডি সেভ করো এবং লোড শুরু করো
-            window.userUID = user.uid;
-            loadUserProgress();
+            showLogin();
         }
     });
 
-    function logoutApp() {
-        if(confirm("আপনি কি লগআউট করতে চান?")) {
-            firebase.auth().signOut().then(() => window.location.replace("login.html"));
+    // --- লগইন ফাংশন (হাইব্রিড) ---
+    function startLogin() {
+        document.getElementById('error-msg').style.display = 'none';
+        const provider = new firebase.auth.GoogleAuthProvider();
+        
+        // মোবাইলে রিডাইরেক্ট ব্যবহার করবে, পিসিতে পপআপ
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            auth.signInWithRedirect(provider);
+        } else {
+            auth.signInWithPopup(provider).catch(handleError);
         }
     }
 
-    // --- DATA LOADING & LOGIC ---
-    let allExamData = [];
-    let userProgressData = {};
+    // মোবাইল রিডাইরেক্ট থেকে ফিরে আসার পর এরর চেক
+    auth.getRedirectResult().catch(handleError);
 
-    function loadUserProgress() {
-        if(!window.userUID) return;
-        db.ref('users/' + window.userUID + '/progress').on('value', (snapshot) => {
-            userProgressData = snapshot.val() || {};
-            if(document.getElementById('sheet').classList.contains('active')) {
-                renderListWithLogic();
-            }
-        });
+    function handleError(error) {
+        const msg = document.getElementById('error-msg');
+        msg.style.display = 'block';
+        if(error.code === 'auth/popup-blocked') {
+            msg.innerHTML = "পপ-আপ ব্লক হয়েছে! দয়া করে 'Open in Chrome' ব্যবহার করুন।";
+        } else {
+            msg.innerText = error.message;
+        }
     }
 
-    db.ref('exams').on('value', (snapshot) => {
-        const data = snapshot.val();
-        const grid = document.getElementById('examGrid');
-        grid.innerHTML = "";
-        if(!data) { grid.innerHTML = "<div>No Data</div>"; return; }
-        allExamData = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
-        const uniqueExams = [...new Set(allExamData.map(item => item.category))];
-        uniqueExams.forEach(cat => {
-            const catItems = allExamData.filter(d => d.category === cat);
-            const isLocked = catItems.some(i => i.locked === true);
-            const item = catItems[0];
-            let icon = item.icon || "https://cdn-icons-png.flaticon.com/512/2995/2995620.png";
-            grid.innerHTML += `
-                <div class="box ${isLocked?'locked':''}" onclick="handleBoxClick('${cat}')">
-                    <img src="${icon}">
-                    <div class="box-title">${cat}</div>
-                    ${isLocked ? '<i class="fas fa-lock lock-icon" style="display:block"></i>' : ''}
-                </div>`;
-        });
-    });
-
-    let currentFilteredList = [];
-    let currentExam = "", currentTopTab = "", currentMenu = "", currentSub = "ALL";
-
-    function handleBoxClick(cat) {
-        triggerFullScreen();
-        const catItems = allExamData.filter(d => d.category === cat);
-        if(catItems.some(i => i.locked)) return alert("🔒 Locked by Admin");
-        openSheet(cat);
-        window.history.pushState({page: "sheet"}, "", "#"+cat);
+    // --- লগআউট ---
+    function logout() {
+        if(confirm("লগআউট করবেন?")) {
+            auth.signOut().then(() => window.location.reload());
+        }
     }
 
-    function openSheet(cat) {
-        currentExam = cat;
-        document.getElementById('sheetTitle').innerText = cat;
-        document.getElementById('sheet').classList.add('active');
-        const examData = allExamData.filter(d => d.category === cat);
-        const topTabs = [...new Set(examData.map(d => d.topTab || "Mock Tests"))]; 
-        const topCont = document.getElementById('topTabsContainer');
-        topCont.innerHTML = "";
-        topTabs.forEach((tab, idx) => {
-            topCont.innerHTML += `<div class="pill-btn ${idx===0?'active':''}" onclick="selectTopTab('${tab}', this)">${tab}</div>`;
-        });
-        if(topTabs.length > 0) selectTopTab(topTabs[0], document.querySelector('.pill-btn'));
-    }
+    // --- ডেটা লোডিং (আপনার পুরনো কোড থেকে) ---
+    function loadExamData() {
+        db.ref('exams').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const grid = document.getElementById('examGrid');
+            grid.innerHTML = "";
+            if(!data) { grid.innerHTML = "<div>No Exams Found</div>"; return; }
+            
+            const allItems = Object.entries(data).map(([key, val]) => val);
+            const uniqueCats = [...new Set(allItems.map(i => i.category))];
 
-    function selectTopTab(tab, el) {
-        currentTopTab = tab;
-        document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-        if(el) el.classList.add('active');
-        const filtered = allExamData.filter(d => d.category === currentExam && (d.topTab || "Mock Tests") === tab);
-        const menus = [...new Set(filtered.map(d => d.subject))];
-        const menuCont = document.getElementById('mainMenuContainer');
-        menuCont.innerHTML = "";
-        menus.forEach((m, idx) => {
-            menuCont.innerHTML += `<div class="tab-link ${idx===0?'active':''}" onclick="selectMenu('${m}', this)">${m}</div>`;
-        });
-        if(menus.length > 0) selectMenu(menus[0], document.querySelector('.tab-link'));
-        else renderListWithLogic([]);
-    }
-
-    function selectMenu(menu, el) {
-        currentMenu = menu;
-        document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
-        if(el) el.classList.add('active');
-        const filtered = allExamData.filter(d => d.category === currentExam && (d.topTab || "Mock Tests") === currentTopTab && d.subject === menu);
-        const subFilters = [...new Set(filtered.map(d => d.subFilter).filter(s => s))];
-        const subCont = document.getElementById('subFilterContainer');
-        subCont.innerHTML = "";
-        if (subFilters.length > 0) {
-            subCont.style.display = 'flex';
-            subCont.innerHTML = `<div class="chip active" onclick="selectSub('ALL', this)">All</div>`;
-            subFilters.forEach(sub => {
-                subCont.innerHTML += `<div class="chip" onclick="selectSub('${sub}', this)">${sub}</div>`;
+            uniqueCats.forEach(cat => {
+                const item = allItems.find(d => d.category === cat);
+                let icon = item.icon || "https://cdn-icons-png.flaticon.com/512/2995/2995620.png";
+                
+                grid.innerHTML += `
+                    <div class="box" onclick="alert('Folder Clicked: ${cat}')">
+                        <img src="${icon}">
+                        <div class="box-title">${cat}</div>
+                    </div>`;
             });
-            selectSub('ALL', document.querySelector('.chip'));
-        } else {
-            subCont.style.display = 'none';
-            currentFilteredList = filtered;
-            renderListWithLogic();
-        }
-    }
-
-    function selectSub(sub, el) {
-        currentSub = sub;
-        document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
-        if(el) el.classList.add('active');
-        let filtered = allExamData.filter(d => d.category === currentExam && (d.topTab || "Mock Tests") === currentTopTab && d.subject === currentMenu);
-        if (sub !== 'ALL') filtered = filtered.filter(d => d.subFilter === sub);
-        currentFilteredList = filtered;
-        renderListWithLogic();
-    }
-
-    function renderListWithLogic() {
-        const listItems = currentFilteredList;
-        const listContainer = document.getElementById('listContainer');
-        const suggestBox = document.getElementById('suggestedBox');
-        listContainer.innerHTML = "";
-        suggestBox.innerHTML = "";
-        suggestBox.style.display = "none";
-
-        if(listItems.length === 0) {
-            listContainer.innerHTML = "<div style='text-align:center; padding:20px; color:#888;'>No Content Found</div>";
-            return;
-        }
-
-        let resumeItem = null;
-        let nextStartItem = null;
-        let lastCompletedIndex = -1;
-
-        listItems.forEach((item, index) => {
-            const prog = userProgressData[item.id];
-            let statusClass = "";
-            let btnHTML = "";
-            let metaHTML = "";
-
-            if (prog && prog.status === 'ongoing') {
-                statusClass = "status-ongoing";
-                btnHTML = `<a href="exam.html?id=${item.id}" class="action-btn btn-resume">Resume Now</a>`;
-                metaHTML = `<span style="color:#e67e22;">Paused: ${Math.floor(prog.timeLeft/60)}m left</span>`;
-                resumeItem = item; 
-            } else if (prog && prog.status === 'completed') {
-                statusClass = "status-completed";
-                lastCompletedIndex = index;
-                const score = prog.score || 0;
-                let badgeColor = parseFloat(score) >= 30 ? "#27ae60" : "#c0392b";
-                btnHTML = `
-                    <a href="quiz-maker.html?id=${item.id}&mode=solution" onclick="alert('Solution coming soon!'); return false;" class="action-btn btn-solution">Solution</a>
-                    <a href="#" class="action-btn btn-analysis">Analysis</a>
-                `;
-                metaHTML = `<span style="color:${badgeColor}; font-weight:bold;">Score: ${score}</span>`;
-            } else {
-                btnHTML = `<a href="${item.link}" class="action-btn btn-start">Start Now</a>`;
-            }
-
-            listContainer.innerHTML += `
-                <div class="test-card ${statusClass}">
-                    <div class="card-top">
-                        <div>
-                            <div class="card-title">${item.chapter}</div>
-                            <div style="font-size:0.8rem; color:#666;">${item.subject}</div>
-                            <div class="card-meta">${metaHTML}</div>
-                        </div>
-                        <div>${btnHTML}</div>
-                    </div>
-                </div>`;
         });
-
-        if (lastCompletedIndex + 1 < listItems.length) {
-            const nextItem = listItems[lastCompletedIndex + 1];
-            const nextProg = userProgressData[nextItem.id];
-            if (!nextProg || nextProg.status !== 'ongoing') {
-                nextStartItem = nextItem;
-            }
-        } else if (lastCompletedIndex === -1 && listItems.length > 0) {
-            const firstItem = listItems[0];
-            const firstProg = userProgressData[firstItem.id];
-            if (!firstProg || firstProg.status !== 'ongoing') {
-                nextStartItem = firstItem;
-            }
-        }
-
-        let suggestedHTML = "";
-        if (resumeItem) {
-            suggestedHTML += `
-                <div class="suggested-card" style="border-left: 4px solid #ff9f43;">
-                    <div><span class="sug-badge badge-resume">Resume Pending</span><div class="card-title">${resumeItem.chapter}</div></div>
-                    <a href="exam.html?id=${resumeItem.id}" class="action-btn btn-resume">Resume</a>
-                </div>`;
-        }
-        if (nextStartItem) {
-            suggestedHTML += `
-                <div class="suggested-card" style="border-left: 4px solid #00b0ff;">
-                    <div><span class="sug-badge badge-next">Suggested For You</span><div class="card-title">${nextStartItem.chapter}</div></div>
-                    <a href="${nextStartItem.link}" class="action-btn btn-start">Start</a>
-                </div>`;
-        }
-
-        if (suggestedHTML !== "") {
-            suggestBox.innerHTML = suggestedHTML;
-            suggestBox.style.display = "block";
-        }
     }
-
-    function triggerFullScreen() {
-        const elem = document.documentElement;
-        if (!document.fullscreenElement && elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
-    }
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) triggerFullScreen();
-        else if (document.exitFullscreen) document.exitFullscreen();
-    }
-    window.goBack = function() { document.getElementById('sheet').classList.remove('active'); }
-    history.pushState(null, document.title, location.href);
-    window.addEventListener('popstate', function (event) {
-        if(document.getElementById('sheet').classList.contains('active')) goBack();
-        else history.pushState(null, document.title, location.href);
-    });
 </script>
 
 </body>
