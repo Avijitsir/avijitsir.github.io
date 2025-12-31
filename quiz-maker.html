@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Quiz Maker</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    
+    <script>MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };</script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* --- MODERN COLOR PALETTE --- */
+        :root {
+            --primary: #4e54c8; /* Deep Blue */
+            --secondary: #8f94fb; /* Soft Blue */
+            --accent: #00b894; /* Green for Success */
+            --danger: #ff7675; /* Red for Delete */
+            --warning: #fdcb6e; /* Yellow/Orange */
+            --bg-body: #f1f2f6;
+            --card-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; padding: 20px; color: #2d3436; }
+        
+        /* Container styling */
+        .container { max-width: 1250px; margin: 0 auto; }
+
+        /* --- DASHBOARD STYLES --- */
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px; border-radius: 15px; color: white; text-align: center;
+            box-shadow: var(--card-shadow); margin-bottom: 30px;
+        }
+        .dashboard-header h1 { margin: 0; font-weight: 600; letter-spacing: 1px; }
+        
+        .search-box {
+            width: 100%; padding: 15px; border: none; border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 1rem;
+            padding-left: 25px; margin-bottom: 20px; outline: none;
+            border: 2px solid transparent; transition: 0.3s;
+        }
+        .search-box:focus { border-color: var(--primary); }
+
+        /* List Items */
+        .quiz-item {
+            background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 6px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .quiz-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        /* --- EDITOR STYLES --- */
+        .top-bar {
+            background: white; padding: 15px 25px; border-radius: 12px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: var(--card-shadow);
+            position: sticky; top: 10px; z-index: 100; margin-bottom: 25px;
+        }
+
+        .editor-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; }
+        
+        /* Card Sections */
+        .card {
+            background: white; padding: 25px; border-radius: 15px;
+            box-shadow: var(--card-shadow); margin-bottom: 25px; position: relative;
+            border: 1px solid #fff;
+        }
+
+        /* 1. Settings Section (Blue Theme) */
+        .card-settings { border-top: 5px solid #0984e3; background: #f0f8ff; }
+        .card-settings h3 { color: #0984e3; display: flex; align-items: center; gap: 8px; }
+
+        /* 2. Question Section (Green Theme) */
+        .card-question { border-top: 5px solid #00b894; background: #eafffa; }
+        .card-question h3 { color: #00b894; display: flex; align-items: center; gap: 8px; }
+
+        /* 3. Bulk Section (Purple Theme) */
+        .card-bulk { border-top: 5px solid #6c5ce7; background: #f3e5f5; }
+
+        /* Inputs & Labels */
+        label { font-weight: 600; font-size: 0.9rem; color: #555; margin-top: 10px; display: block; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border: 1px solid #dcdcdc; border-radius: 8px;
+            background: white; margin-top: 5px; box-sizing: border-box; font-family: inherit;
+            transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(78, 84, 200, 0.1); outline: none; }
+
+        /* Grid for Inputs */
+        .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        /* Buttons */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 5px; justify-content: center; }
+        .btn-primary { background: linear-gradient(45deg, #0984e3, #74b9ff); color: white; }
+        .btn-success { background: linear-gradient(45deg, #00b894, #55efc4); color: white; }
+        .btn-danger { background: linear-gradient(45deg, #d63031, #ff7675); color: white; }
+        .btn-back { background: #dfe6e9; color: #333; }
+        .btn:hover { transform: scale(1.02); opacity: 0.9; }
+
+        /* Rich Text Toolbar */
+        .toolbar { display: flex; gap: 5px; margin-top: 5px; background: #e0e0e0; padding: 5px; border-radius: 5px 5px 0 0; }
+        .toolbar button { width: 30px; height: 30px; border: none; background: white; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .rich-input { min-height: 80px; border: 1px solid #ccc; background: white; padding: 10px; border-radius: 0 0 5px 5px; border-top: none; }
+
+        /* Preview Section (Sticky) */
+        .preview-pane {
+            background: white; height: calc(100vh - 120px); position: sticky; top: 100px;
+            border-radius: 15px; overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: var(--card-shadow); border: 1px solid #eee;
+        }
+        .preview-header { background: #2d3436; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .q-list-scroll { flex: 1; overflow-y: auto; padding: 15px; background: #f8f9fa; }
+        
+        /* Question Card in Preview */
+        .q-preview-card {
+            background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #fdcb6e;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px; position: relative;
+        }
+        .q-badge { background: #fdcb6e; color: #333; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; display: inline-block; margin-bottom: 5px; }
+
+        /* Responsive */
+        @media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } .preview-pane { height: auto; position: static; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div id="view-dashboard">
+        <div class="dashboard-header">
+            <h1>🎓 কুইজ মেকার ড্যাশবোর্ড</h1>
+            <p>সহজেই কুইজ তৈরি করুন এবং পরিচালনা করুন</p>
+            <button onclick="createNewQuiz()" class="btn btn-success" style="margin: 15px auto; font-size: 1.1rem; padding: 12px 30px;">
+                <span class="material-icons">add_circle</span> নতুন কুইজ তৈরি করুন
+            </button>
+        </div>
+
+        <input type="text" class="search-box" id="search-quiz" placeholder="🔍 কুইজের নাম দিয়ে খুঁজুন..." onkeyup="filterQuizzes()">
+        
+        <div id="quiz-list-container">
+            <p style="text-align:center; color:#888;">লোড হচ্ছে...</p>
+        </div>
+    </div>
+
+
+    <div id="view-editor" style="display:none;">
+        
+        <div class="top-bar">
+            <button onclick="showDashboard()" class="btn btn-back"><span class="material-icons">arrow_back</span> ড্যাশবোর্ড</button>
+            <h2 style="margin:0; color: var(--primary);">📝 কুইজ এডিটর</h2>
+            <button onclick="saveQuizData()" class="btn btn-success"><span class="material-icons">save</span> সেভ কুইজ</button>
+        </div>
+
+        <div class="editor-grid">
+            <div class="left-col">
+                
+                <div class="card card-settings">
+                    <h3><span class="material-icons">settings</span> কুইজ সেটিংস (Basic Info)</h3>
+                    <input type="hidden" id="quiz-id-input">
+                    
+                    <label>📌 পরীক্ষার নাম (Exam Title):</label>
+                    <input type="text" id="quiz-title-input" placeholder="যেমন: Mock Test - 01">
+                    
+                    <div class="row-grid">
+                        <div><label>⏱️ সময় (মিনিট):</label><input type="number" id="quiz-duration" placeholder="90"></div>
+                        <div><label>🎯 পাস মার্ক:</label><input type="number" id="quiz-pass-mark" placeholder="30"></div>
+                    </div>
+                    <div class="row-grid">
+                        <div><label>✅ প্রতি সঠিক উত্তরে (+):</label><input type="number" id="quiz-pos-mark" value="1"></div>
+                        <div><label>❌ প্রতি ভুল উত্তরে (-):</label><input type="number" id="quiz-neg-mark" value="0.25"></div>
+                    </div>
+                    
+                    <div style="display:flex; gap:20px; margin-top:15px; background:white; padding:10px; border-radius:8px;">
+                        <label style="margin:0; cursor:pointer; display:flex; align-items:center;"><input type="checkbox" id="rand-question-check" style="width:auto; margin-right:5px;"> প্রশ্ন এলোমেলো হবে (Shuffle Qs)</label>
+                        <label style="margin:0; cursor:pointer; display:flex; align-items:center;"><input type="checkbox" id="rand-option-check" style="width:auto; margin-right:5px;"> অপশন এলোমেলো হবে (Shuffle Opts)</label>
+                    </div>
+                </div>
+
+                <div class="card card-question">
+                    <h3><span class="material-icons">add_circle_outline</span> প্রশ্ন যোগ করুন (Input)</h3>
+                    
+                    <label>📚 বিষয় (Subject):</label>
+                    <select id="question-subject-select">
+                        <option value="General Knowledge">General Knowledge</option>
+                        <option value="Bangla">Bangla</option>
+                        <option value="English">English</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                    </select>
+
+                    <label>📜 অনুচ্ছেদ (Passage - ঐচ্ছিক):</label>
+                    <textarea id="passage-input" rows="2" placeholder="যদি প্যাসেজ থাকে তবে এখানে লিখুন..."></textarea>
+
+                    <label>❓ প্রশ্ন (Question Text):</label>
+                    <div class="toolbar">
+                        <button onclick="formatText('bold')">B</button>
+                        <button onclick="formatText('italic')">I</button>
+                        <button onclick="formatText('underline')">U</button>
+                        <button onclick="insertMath('\\sqrt{x}')">√x</button>
+                        <button onclick="insertMath('\\frac{a}{b}')">a/b</button>
+                    </div>
+                    <div id="rich-q-text" class="rich-input" contenteditable="true"></div>
+
+                    <label>📷 প্রশ্নের ছবি (Optional):</label>
+                    <input type="file" id="q-img-input" accept="image/*">
+
+                    <label>🔠 অপশনসমূহ (Options):</label>
+                    <div class="row-grid">
+                        <input type="text" id="o1" placeholder="অপশন ১">
+                        <input type="text" id="o2" placeholder="অপশন ২">
+                        <input type="text" id="o3" placeholder="অপশন ৩">
+                        <input type="text" id="o4" placeholder="অপশন ৪">
+                    </div>
+
+                    <div class="row-grid">
+                        <div>
+                            <label>✅ সঠিক উত্তর কোনটি?</label>
+                            <select id="c-opt" style="border: 2px solid #00b894; font-weight:bold;">
+                                <option value="0">অপশন ১</option>
+                                <option value="1">অপশন ২</option>
+                                <option value="2">অপশন ৩</option>
+                                <option value="3">অপশন ৪</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>💡 ব্যাখ্যা (Explanation):</label>
+                            <input type="text" id="expl-input" placeholder="কেন সঠিক? (Optional)">
+                        </div>
+                    </div>
+                    <div style="margin-top:5px;"><input type="file" id="expl-img" accept="image/*" title="ব্যাখ্যার ছবি"></div>
+
+                    <div style="margin-top:20px; display:flex; gap:10px;">
+                        <button id="add-question-btn" class="btn btn-primary" style="flex:1;">➕ লিস্টে যোগ করুন</button>
+                        <button id="update-question-btn" class="btn btn-warning" style="flex:1; display:none; background:#ff9f43; color:white;">🔄 আপডেট করুন</button>
+                    </div>
+                </div>
+
+                <div class="card card-bulk">
+                    <h3><span class="material-icons">upload_file</span> একসাথে অনেক প্রশ্ন (Bulk Import)</h3>
+                    <textarea id="bulk-input-textarea" rows="5" placeholder="Format:&#10;Question Line 1&#10;Option A&#10;Option B&#10;Option C&#10;Option D&#10;Answer: Option A"></textarea>
+                    <button id="process-bulk-btn" class="btn" style="background:#6c5ce7; color:white; width:100%; margin-top:10px;">⚡ প্রসেস করুন</button>
+                </div>
+            </div>
+
+            <div class="right-col">
+                <div class="preview-pane">
+                    <div class="preview-header">
+                        <span>📋 প্রিভিউ লিস্ট</span>
+                        <span style="font-size:0.8rem; opacity:0.8;">Drag to Reorder</span>
+                    </div>
+                    <div id="questions-container" class="q-list-scroll">
+                        </div>
+                    <div style="padding:15px; background:white; border-top:1px solid #ddd;">
+                        <div id="share-link-box" style="display:none; background:#e8f5e9; padding:10px; border-radius:8px; border:1px solid #b2bec3;">
+                            <strong style="color:#2d3436; display:block; margin-bottom:5px;">🎉 লিংক তৈরি হয়েছে:</strong>
+                            <input type="text" id="generated-link" readonly style="font-size:0.9rem; padding:8px;">
+                            <button onclick="copyLink()" class="btn btn-success" style="width:100%; margin-top:5px;">🔗 কপি লিংক</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-results" style="display:none;">
+        <div class="top-bar">
+            <button onclick="showDashboard()" class="btn btn-back">🔙 ড্যাশবোর্ড</button>
+            <h2 id="res-quiz-title" style="margin:0;">ফলাফল</h2>
+            <button onclick="exportToCSV()" class="btn btn-primary">📥 Excel ডাউনলোড</button>
+        </div>
+        <div class="card" style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse;">
+                <thead style="background:#f1f2f6;">
+                    <tr>
+                        <th style="padding:15px; text-align:left;">নাম</th>
+                        <th style="padding:15px; text-align:left;">স্কোর</th>
+                        <th style="padding:15px; text-align:left;">তারিখ</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

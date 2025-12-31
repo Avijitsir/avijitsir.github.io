@@ -1,0 +1,57 @@
+/* --- Modern Variable Color Palette --- */
+:root {
+    --bg-body: #f0f2f5;
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --success-color: #06d6a0;
+    --danger-color: #ef233c;
+    --warning-color: #ffd166;
+    /* Section Colors */
+    --settings-bg: #e3f2fd; --settings-border: #2196f3;
+    --question-bg: #e8f5e9; --question-border: #4caf50;
+    --bulk-bg: #f3e5f5; --bulk-border: #9c27b0;
+}
+
+/* General Body */
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-body); padding: 15px; margin: 0; color: #333; }
+.container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+
+/* Sticky Header */
+.sticky-top { position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); z-index: 100; padding: 10px 0; border-bottom: 3px solid var(--primary-color); margin-bottom: 20px; backdrop-filter: blur(5px); }
+
+/* Grid Layout */
+.editor-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 25px; align-items: start; }
+.editor-left { display: flex; flex-direction: column; gap: 20px; }
+.editor-right { position: sticky; top: 80px; height: calc(100vh - 100px); overflow-y: hidden; display: flex; flex-direction: column; }
+@media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } .editor-right { position: static; height: auto; } }
+
+/* Sections */
+h1, h2, h3 { margin-top: 0; color: #2b2d42; }
+.section-settings { background: #fff; border-left: 5px solid var(--settings-border); padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(33, 150, 243, 0.1); }
+.section-question { background: #fff; border-left: 5px solid var(--question-border); padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(76, 175, 80, 0.1); }
+.section-bulk { background: #fff; border-left: 5px solid var(--bulk-border); padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(156, 39, 176, 0.1); }
+
+/* Elements */
+button { cursor: pointer; transition: 0.3s; border: none; font-weight: bold; border-radius: 6px; }
+.primary-btn { background: var(--primary-color); color: white; padding: 10px 20px; }
+.primary-btn:hover { background: var(--secondary-color); }
+.secondary-btn { background: #6c757d; color: white; padding: 8px 15px; }
+.action-btn { padding: 5px 10px; color: white; border-radius: 4px; font-size: 12px; margin-left: 5px; }
+
+input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; background: #fafafa; }
+input:focus, select:focus, textarea:focus { border-color: var(--primary-color); background: #fff; outline: none; }
+
+/* Lists & Cards */
+.quiz-list-item { background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #607d8b; padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+.quiz-list-item:hover { transform: translateX(5px); border-left-color: var(--primary-color); }
+.q-card { background: #fff; padding: 12px; border: 1px solid #eee; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #ff9800; cursor: move; }
+.q-card.over { border: 2px dashed var(--primary-color); background: #e3f2fd; }
+.q-header { display: flex; justify-content: space-between; background: #fff3e0; padding: 8px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #e65100; }
+
+#questions-container, .table-responsive, #quiz-list-container { max-height: 500px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 10px; background: #f8f9fa; border-radius: 6px; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.rich-toolbar { background: #eee; padding: 5px; border: 1px solid #ccc; border-bottom: none; border-radius: 4px 4px 0 0; }
+.rich-editor { border: 1px solid #ccc; min-height: 80px; padding: 10px; background: white; margin-bottom: 15px; border-radius: 0 0 4px 4px; }
+table { width: 100%; border-collapse: collapse; background: white; }
+th { background: #2d3436; color: white; padding: 12px; position: sticky; top: 0; }
+td { border-bottom: 1px solid #eee; padding: 10px; }

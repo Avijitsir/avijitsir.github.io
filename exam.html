@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Utkarsh Coaching Exam</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script>MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };</script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script>
+        // --- SECURITY CHECK (Placed inside head to run first) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
+            authDomain: "mock-test-1eea6.firebaseapp.com",
+            databaseURL: "https://mock-test-1eea6-default-rtdb.firebaseio.com",
+            projectId: "mock-test-1eea6",
+            storageBucket: "mock-test-1eea6.firebaseapp.com",
+            messagingSenderId: "111849173136",
+            appId: "1:111849173136:web:8b211f58d854119e88a815",
+            measurementId: "G-5RLWPTP8YD"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                alert("পরীক্ষা দিতে হলে আপনাকে লগইন করতে হবে!");
+                window.location.replace("login.html");
+            } else {
+                window.userUID = user.uid; // Store UID for script.js
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <div id="fullscreenOverlay" class="fs-overlay" style="display:none;">
+        <div class="fs-box">
+            <span class="material-icons" style="font-size: 40px; color: #ff9800;">warning</span>
+            <h3>সতর্কতা!</h3>
+            <p>ফুলস্ক্রিন মোড বন্ধ করা যাবে না। পরীক্ষা চালিয়ে যেতে নিচের বাটনে ক্লিক করুন।</p>
+            <button id="returnFsBtn" class="tb-btn primary">Return to Fullscreen</button>
+        </div>
+    </div>
+
+    <div id="instructionScreen" class="inst-container">
+        <div class="inst-header">
+            <h2 class="inst-title" id="instTitle">General Instructions</h2>
+            <div class="lang-box">
+                <span id="lblChooseLang">Choose Language: </span>
+                <select class="inst-select" id="langSelector">
+                    <option value="en">English</option>
+                    <option value="bn">Bengali</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="inst-content" id="instContent">Loading Instructions...</div>
+
+        <div class="inst-footer">
+            <div class="declaration">
+                <input type="checkbox" id="agreeCheck">
+                <label for="agreeCheck" id="agreeLabel">I have read and understood the instructions.</label>
+            </div>
+            <button class="begin-btn" id="startTestBtn" disabled>I am ready to begin</button>
+        </div>
+    </div>
+
+    <div id="quizMainArea" style="display: none; height:100vh; flex-direction:column;">
+        <header class="app-header">
+            <div class="header-left">
+                <span class="material-icons menu-icon">menu</span>
+                <span class="app-logo">Utkarsh Coaching</span>
+            </div>
+            <div class="header-right">
+                <div class="timer-box">
+                    <span id="timerDisplay">00:00</span>
+                    <span class="material-icons" style="font-size:16px;">pause_circle</span>
+                </div>
+                <button class="header-btn" id="pauseBtn">Pause</button>
+            </div>
+        </header>
+
+        <div class="section-bar">
+            <div class="chip active">All Sections</div>
+        </div>
+
+        <div class="q-info-bar">
+            <div class="q-num">Question No. <span id="currentQNum">1</span></div>
+            <div class="q-meta">
+                <div class="marks-badge">
+                    <span class="plus" id="dispPosMark">+1</span>
+                    <span class="minus" id="dispNegMark">-0.33</span>
+                </div>
+                <div class="lang-select">
+                    View in <select id="quizLangSelect" style="border:none; background:transparent; font-weight:bold;"><option value="bn">Bengali</option><option value="en">English</option></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area" id="examSwipeArea">
+            <div class="question-text" id="questionTextBox">Loading...</div>
+            <div class="options-list" id="optionsContainer"></div>
+        </div>
+
+        <footer class="app-footer">
+            <div class="footer-row">
+                <button class="tb-btn review" id="markReviewBtn">Mark Review</button>
+                <button class="tb-btn clear" id="clearResponseBtn">Clear</button>
+                <button class="tb-btn save" id="saveNextBtn">Save & Next</button>
+            </div>
+        </footer>
+
+        <div class="drawer-overlay" id="sheetOverlay"></div>
+        <div class="side-drawer" id="paletteSheet">
+            <div class="drawer-header">
+                <div class="user-info"><div class="avatar">U</div><span>Candidate</span></div>
+                <span class="material-icons close-drawer" id="closeSheetBtn">close</span>
+            </div>
+            <div class="legend-grid">
+                <div class="l-item"><span class="dot answered"></span> Answered</div>
+                <div class="l-item"><span class="dot marked"></span> Marked</div>
+                <div class="l-item"><span class="dot not-visited"></span> Not Visited</div>
+                <div class="l-item"><span class="dot marked-ans"></span> Marked & Ans</div>
+                <div class="l-item"><span class="dot not-answered"></span> Not Answered</div>
+            </div>
+            <div class="section-header">Questions Palette</div>
+            <div class="drawer-content"><div class="palette-grid" id="paletteGrid"></div></div>
+            <div class="drawer-footer"><button class="tb-btn submit" id="submitTestBtn" style="background:#00c696; color:white; width:100%;">Submit Test</button></div>
+        </div>
+    </div>
+
+    <div id="resultModal" class="modal">
+        <div class="modal-content result-box">
+            
+            <div class="res-tab-header">
+                <button class="rt-tab active" onclick="switchTab('score')" id="btn-score">📊 Score Card</button>
+                <button class="rt-tab" onclick="switchTab('solution')" id="btn-solution">📝 Solution</button>
+            </div>
+
+            <div id="tab-score-view" class="res-header-pnl" style="overflow-y:auto; height:100%;">
+                <div id="passFailBox" style="text-align:center; padding:8px; margin-bottom:10px; font-weight:bold; font-size:16px; border-radius:5px;"></div>
+
+                <div class="score-grid">
+                    <div class="s-item"><span class="lbl">Score</span><span class="val" id="resScore">0</span></div>
+                    <div class="s-item"><span class="lbl">Correct</span><span class="val green" id="resCorrect">0</span></div>
+                    <div class="s-item"><span class="lbl">Wrong</span><span class="val red" id="resWrong">0</span></div>
+                    <div class="s-item"><span class="lbl">Skipped</span><span class="val gray" id="resSkip">0</span></div>
+                </div>
+                
+                <div class="filter-tabs" style="justify-content:center; margin-top:15px;">
+                    <button class="f-btn active" onclick="applyFilter('all')">All</button>
+                    <button class="f-btn" onclick="applyFilter('correct')">Correct</button>
+                    <button class="f-btn" onclick="applyFilter('wrong')">Wrong</button>
+                    <button class="f-btn" onclick="applyFilter('skipped')">Skipped</button>
+                </div>
+                
+                <h4 style="margin:15px 0 5px 0; color:#555; text-align:center;">Question Palette:</h4>
+                <div class="res-palette-scroll" id="resPaletteContainer" style="flex-wrap:wrap; justify-content:center; padding-bottom:20px;"></div>
+                
+                <div style="margin-top:20px; text-align:center; padding-bottom:20px;">
+                    <button class="tb-btn primary" style="background:#4361ee; color:white; padding:12px 30px; margin-bottom:10px;" onclick="switchTab('solution')">View Solutions &rarr;</button>
+                    <br>
+                    <button class="tb-btn secondary" style="background:#6c757d; color:white; padding:10px 20px;" onclick="location.reload()">Close & Re-attempt</button>
+                </div>
+            </div>
+
+            <div id="tab-solution-view" class="res-content-area" style="display:none;">
+                
+                <div style="background:#f8f9fa; padding:10px; border-bottom:1px solid #eee;">
+                     <div class="filter-tabs" style="justify-content:center; margin:0;">
+                        <button class="f-btn active" onclick="applyFilter('all')">All</button>
+                        <button class="f-btn" onclick="applyFilter('correct')">Correct</button>
+                        <button class="f-btn" onclick="applyFilter('wrong')">Wrong</button>
+                        <button class="f-btn" onclick="applyFilter('skipped')">Skipped</button>
+                    </div>
+                </div>
+
+                <div class="q-info-bar" style="border-bottom:1px solid #eee;">
+                    <div class="q-num">Question No. <span id="resCurrentQNum">1</span></div>
+                    <div class="res-status-badge" id="resQStatusBadge">Correct</div>
+                </div>
+
+                <div class="content-area" id="resSwipeArea" style="padding-bottom: 60px;"> 
+                    <div class="question-text" id="resQuestionText">Loading...</div>
+                    <div class="options-list" id="resOptionsContainer"></div>
+                    
+                    <div id="resExplanation" class="explanation-box" style="display:none;">
+                        <strong>Explanation:</strong> <span id="resExplText"></span>
+                    </div>
+                </div>
+                
+                <div id="resEmptyMsg" style="display:none; flex:1; justify-content:center; align-items:center; color:#888;">No questions found in this category.</div>
+
+                <div class="result-footer">
+                    <div class="footer-row">
+                        <button class="tb-btn secondary" id="resPrevBtn">Previous</button>
+                        <button class="tb-btn secondary" id="resNextBtn">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

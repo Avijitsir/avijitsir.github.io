@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Admin Panel</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; color: #333; }
+        .container { max-width: 950px; margin: auto; }
+        h2 { text-align: center; color: #4361ee; margin-bottom: 20px; font-weight: 800; }
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: #e0e0e0; color: #555; font-weight: bold; font-size: 1rem; cursor: pointer; border-radius: 8px 8px 0 0; transition: 0.3s; }
+        .tab-btn:hover { background: #dcdcdc; }
+        .tab-btn.active { background: #4361ee; color: white; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .section-box { background: white; padding: 25px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .section-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #2d3436; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .badge { background: #4361ee; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; margin-left: 10px;}
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full-width { grid-column: span 2; }
+        label { font-weight: bold; display: block; margin-top: 5px; color: #555; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; background: #fff; box-sizing: border-box; }
+        input:focus, select:focus { border-color: #4361ee; outline: none; background: #f8fbff; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .btn-primary { background: #4361ee; color: white; }
+        .btn-cancel { background: #ff4757; color: white; display: none; margin-top: 10px; }
+        .btn-tool { background: #00b894; color: white; width: auto; padding: 10px 20px; }
+        .tool-row { display: flex; gap: 10px; align-items: center; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; flex-wrap: wrap; }
+        .filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #fff8e1; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ffeaa7; }
+        .filter-input { padding: 8px; border: 1px solid #ddd; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        .table-scroll-wrapper { max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; display: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        thead th { position: sticky; top: 0; background: #f1f2f6; z-index: 10; box-shadow: 0 2px 2px rgba(0,0,0,0.05); }
+        th { text-align: left; padding: 12px; color: #555; }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-size: 0.85rem; margin-right: 5px; }
+        .edit-btn { background: #fbc531; color: #333; }
+        .del-btn { background: #ff4757; }
+        .small-img { width: 35px; height: 35px; border-radius: 6px; object-fit: cover; }
+        .lock-status { font-size: 0.8rem; color: #ff4757; font-weight: bold; display: block; margin-top: 2px;}
+        .preview-box { width: 50px; height: 50px; border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fafafa; margin-left: 10px; }
+        img#imgPreview { width: 100%; height: 100%; object-fit: cover; display: none; }
+        #emptyStateMsg { text-align: center; padding: 40px; color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⚡ সুপার অ্যাডমিন প্যানেল</h2>
+    
+    <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #2d3436; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h3 style="margin: 0; color: #2d3436;">🧩 নতুন প্রশ্ন তৈরি বা এডিট করুন</h3>
+            <small style="color: #666;">Create new mock tests or edit existing questions</small>
+        </div>
+        <a href="quiz-maker.html" target="_blank" style="text-decoration: none;">
+            <button style="background: #2d3436; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                Open Quiz Maker ➤
+            </button>
+        </a>
+    </div>
+    <div class="tab-container">
+        <button class="tab-btn tab-single active" onclick="openTab('section-single')">📝 Single Entry</button>
+        <button class="tab-btn tab-bulk" onclick="openTab('section-bulk')">🛠️ Bulk Tools</button>
+        <button class="tab-btn tab-list" onclick="openTab('section-list')">📂 File List</button>
+    </div>
+
+    <div id="section-single" class="tab-content active section-box" style="border-top: 5px solid #4361ee;">
+        <div class="section-title">
+            <div>📝 Single Entry Manager <span class="badge" id="modeBadge">Add New Mode</span></div>
+        </div>
+        
+        <input type="hidden" id="editKey"> <div class="form-grid">
+            <div>
+                <label>1. পরীক্ষার নাম (Exam)</label>
+                <input type="text" id="catName" list="catList" placeholder="Select or Type New" oninput="autoLoadIcon()">
+                <datalist id="catList"></datalist>
+            </div>
+            <div>
+                <label>2. আইকন (Icon)</label>
+                <div style="display:flex; align-items:center;">
+                    <input type="file" id="iconFile" accept="image/*" onchange="previewImage()">
+                    <div class="preview-box"><img id="imgPreview"></div>
+                </div>
+                <input type="hidden" id="existingIcon">
+            </div>
+            <div>
+                <label>3. ট্যাব (Top Tab)</label>
+                <input type="text" id="topTabInput" list="topTabList" placeholder="Select or Type New">
+                <datalist id="topTabList">
+                    <option value="Mock Tests"><option value="PYPs"><option value="Notes"><option value="Videos">
+                </datalist>
+            </div>
+            <div>
+                <label>4. মেনু (Menu)</label>
+                <input type="text" id="menuName" list="menuList" placeholder="Ex: Full Test">
+                <datalist id="menuList"></datalist>
+            </div>
+            <div>
+                <label>5. সাব-ফিল্টার (Sub Filter)</label>
+                <input type="text" id="subFilter" placeholder="Optional (Ex: Class 7)">
+            </div>
+            <div>
+                <label>6. চ্যাপ্টার নাম (Name)</label>
+                <input type="text" id="chapterName" placeholder="Ex: Test-1">
+            </div>
+            <div class="full-width">
+                <label>7. লিংক (Link URL)</label>
+                <input type="text" id="linkUrl" placeholder="Paste Link Here">
+            </div>
+        </div>
+        <button class="btn btn-primary" id="submitBtn" onclick="saveData()">Save Single Entry</button>
+        <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()">Cancel Edit</button>
+        <p id="status" style="text-align:center; margin-top:10px; font-weight:bold;"></p>
+    </div>
+
+    <div id="section-bulk" class="tab-content section-box" style="border-top: 5px solid #00b894;">
+        <div class="section-title">🛠️ Bulk Folder Tools</div>
+        
+        <div class="tool-row" style="border-left: 5px solid #ff4757;">
+            <div style="flex:1; min-width: 200px;">
+                <label style="margin:0;">🔹 Lock/Unlock Folder</label>
+                <small style="color:#666;">Students cannot open locked folders</small>
+            </div>
+            <select id="toolLockCat" style="width:20%; margin:0;"><option>Select Folder</option></select>
+            <button class="btn btn-tool" style="background:#ff4757; width:auto; margin-right:5px;" onclick="bulkLockAction(true)">🔒 Lock</button>
+            <button class="btn btn-tool" style="background:#2ed573; width:auto;" onclick="bulkLockAction(false)">🔓 Unlock</button>
+        </div>
+
+        <div class="tool-row">
+            <div style="flex:1; min-width: 200px;">
+                <label style="margin:0;">🔹 Rename Folder</label>
+            </div>
+            <select id="toolOldCat" style="width:20%; margin:0;"><option>Select Folder</option></select>
+            <input type="text" id="toolNewCat" placeholder="New Name" style="width:20%; margin:0;">
+            <button class="btn btn-tool" onclick="bulkRenameCategory()">Rename</button>
+        </div>
+
+        <div class="tool-row">
+            <div style="flex:1; min-width: 200px;">
+                <label style="margin:0;">🔹 Rename Top Tab</label>
+            </div>
+            <select id="toolTabCat" style="width:20%; margin:0;" onchange="loadTopTabsForTool()">
+                <option value="">Select Exam First</option>
+            </select>
+            <select id="toolOldTab" style="width:20%; margin:0;"><option value="">Select Old Tab</option></select>
+            <input type="text" id="toolNewTab" placeholder="New Tab Name" style="width:20%; margin:0;">
+            <button class="btn btn-tool" onclick="bulkRenameTopTab()">Rename</button>
+        </div>
+
+        <div class="tool-row">
+            <div style="flex:1; min-width: 200px;">
+                <label style="margin:0;">🔹 Update Icon</label>
+            </div>
+            <select id="toolIconCat" style="width:20%; margin:0;"><option>Select Folder</option></select>
+            <input type="file" id="toolNewIconFile" accept="image/*" style="width:20%; margin:0;">
+            <button class="btn btn-tool" onclick="bulkUpdateIcon()">Update</button>
+        </div>
+    </div>
+
+    <div id="section-list" class="tab-content section-box" style="border-top: 5px solid #fbc531;">
+        <div class="section-title">📂 Uploaded Files List</div>
+        
+        <div class="filter-grid">
+            <div>
+                <small>Select Exam (Required):</small>
+                <select id="filterExam" class="filter-input" onchange="filterTable()" style="background:#fff; border-color:#4361ee; color:#4361ee; font-weight:bold;">
+                    <option value="">🔽 Select Folder</option>
+                </select>
+            </div>
+            <div>
+                <small>Filter Tab:</small>
+                <input type="text" id="filterTab" class="filter-input" placeholder="Ex: Mock Tests" oninput="filterTable()">
+            </div>
+            <div>
+                <small>Filter Menu:</small>
+                <input type="text" id="filterMenu" class="filter-input" placeholder="Ex: Full Test" oninput="filterTable()">
+            </div>
+            <div>
+                <small>Search Chapter:</small>
+                <input type="text" id="filterChapter" class="filter-input" placeholder="Type Name..." oninput="filterTable()">
+            </div>
+        </div>
+
+        <div id="emptyStateMsg">
+            <h3 style="color:#ccc;">Select a "Folder" from filters to view files.</h3>
+        </div>
+
+        <div class="table-scroll-wrapper" id="tableWrapper">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th width="8%">Icon</th>
+                        <th width="15%">Exam</th>
+                        <th width="15%">Top Tab</th>
+                        <th width="20%">Menu</th>
+                        <th width="25%">Chapter Name</th>
+                        <th width="17%">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- AUTH GATEKEEPER ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
+        authDomain: "mock-test-1eea6.firebaseapp.com",
+        databaseURL: "https://mock-test-1eea6-default-rtdb.firebaseio.com",
+        projectId: "mock-test-1eea6",
+        storageBucket: "mock-test-1eea6.firebaseapp.com",
+        messagingSenderId: "111849173136",
+        appId: "1:111849173136:web:8b211f58d854119e88a815",
+        measurementId: "G-5RLWPTP8YD"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    firebase.auth().onAuthStateChanged((user) => {
+        if (!user) {
+            window.location.replace("login.html");
+        }
+    });
+
+    // --- TAB SWITCHER ---
+    function openTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+
+        if(tabId === 'section-single') document.querySelector('.tab-single').classList.add('active');
+        if(tabId === 'section-bulk') document.querySelector('.tab-bulk').classList.add('active');
+        if(tabId === 'section-list') document.querySelector('.tab-list').classList.add('active');
+    }
+
+    let allData = [];
+
+    // --- 1. LOAD DATA ---
+    db.ref('exams').on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if(data) {
+            // Reverse data so the newest entries are first
+            allData = Object.entries(data).reverse();
+            const vals = Object.values(data);
+            const uniqueCats = [...new Set(vals.map(i => i.category))];
+            const uniqueMenus = [...new Set(vals.map(i => i.subject))];
+            updateDropdowns(uniqueCats, uniqueMenus);
+        } else {
+            allData = [];
+        }
+        filterTable(); 
+    });
+
+    // --- SMART AUTO-FILL FUNCTION ---
+    window.autoLoadIcon = function() {
+        const catInput = document.getElementById('catName').value.trim();
+        const existingIconInput = document.getElementById('existingIcon');
+        const imgPreview = document.getElementById('imgPreview');
+        
+        if(!catInput) return;
+
+        // allData is already reversed (newest first). 
+        // So .find() will give us the LATEST entry for this exam name.
+        const foundItem = allData.find(([key, val]) => val.category === catInput);
+
+        if(foundItem) {
+            const val = foundItem[1];
+
+            // 1. Auto-Fill Icon (As before)
+            if(val.icon && val.icon.length > 10) {
+                const iconUrl = val.icon;
+                imgPreview.src = iconUrl;
+                imgPreview.style.display = "block";
+                existingIconInput.value = iconUrl; 
+            }
+
+            // 2. Auto-Fill Smart Data (Tab, Menu, Sub-filter)
+            // এটি সেই ফিচার যা আপনি চেয়েছিলেন - অটোমেটিক লেখা চলে আসা
+            // এটি কেবল ভ্যালু বসাবে, আপনি চাইলে এডিট করতে পারবেন
+            document.getElementById('topTabInput').value = val.topTab || "Mock Tests";
+            document.getElementById('menuName').value = val.subject || "";
+            document.getElementById('subFilter').value = val.subFilter || "";
+        }
+    }
+
+    function renderTable(dataList) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = "";
+
+        if(dataList.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center'>No Data Found</td></tr>";
+            return;
+        }
+
+        dataList.forEach(([key, val]) => {
+            let iconShow = (val.icon && val.icon.length > 20) 
+                ? `<img src="${val.icon}" class="small-img">` 
+                : `📂`;
+
+            let lockBadge = val.locked ? `<span class="lock-status">🔒 Locked</span>` : ``;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${iconShow}</td>
+                    <td><b>${val.category}</b> ${lockBadge}</td>
+                    <td><span style="background:#eef2ff; padding:2px 8px; border-radius:10px; font-size:0.85rem; color:#4361ee;">${val.topTab || 'Mock Tests'}</span></td>
+                    <td>${val.subject}</td>
+                    <td>${val.chapter} <br> <small style="color:#888;">${val.subFilter || ''}</small></td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editSingleItem('${key}')">Edit</button>
+                        <button class="action-btn del-btn" onclick="deleteItem('${key}')">Del</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    window.filterTable = function() {
+        const examVal = document.getElementById('filterExam').value;
+        const tabVal = document.getElementById('filterTab').value.trim().toLowerCase();
+        const menuVal = document.getElementById('filterMenu').value.trim().toLowerCase();
+        const chapVal = document.getElementById('filterChapter').value.trim().toLowerCase();
+
+        const wrapper = document.getElementById('tableWrapper');
+        const emptyMsg = document.getElementById('emptyStateMsg');
+
+        if(examVal === "") {
+            wrapper.style.display = "none";
+            emptyMsg.style.display = "block";
+            return;
+        }
+
+        wrapper.style.display = "block";
+        emptyMsg.style.display = "none";
+
+        const filteredData = allData.filter(([key, val]) => {
+            if(val.category !== examVal) return false;
+            if(tabVal && !(val.topTab || "Mock Tests").toLowerCase().includes(tabVal)) return false;
+            if(menuVal && !val.subject.toLowerCase().includes(menuVal)) return false;
+            if(chapVal && !val.chapter.toLowerCase().includes(chapVal)) return false;
+            return true;
+        });
+
+        renderTable(filteredData);
+    }
+
+    function updateDropdowns(cats, menus) {
+        document.getElementById('catList').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+        document.getElementById('menuList').innerHTML = menus.map(m => `<option value="${m}">`).join('');
+
+        let opts = `<option value="">Select Folder</option>` + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('toolOldCat').innerHTML = opts;
+        document.getElementById('toolIconCat').innerHTML = opts;
+        document.getElementById('toolTabCat').innerHTML = opts; 
+        document.getElementById('toolLockCat').innerHTML = opts;
+
+        const currentFilter = document.getElementById('filterExam').value;
+        let filterOpts = `<option value="">🔽 Select Folder</option>` + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('filterExam').innerHTML = filterOpts;
+        
+        if(currentFilter && cats.includes(currentFilter)) {
+            document.getElementById('filterExam').value = currentFilter;
+        }
+    }
+
+    function saveData() {
+        const key = document.getElementById('editKey').value;
+        const cat = document.getElementById('catName').value.trim();
+        const topTab = document.getElementById('topTabInput').value.trim();
+        const menu = document.getElementById('menuName').value.trim();
+        const sub = document.getElementById('subFilter').value.trim();
+        const name = document.getElementById('chapterName').value.trim();
+        const url = document.getElementById('linkUrl').value.trim();
+        const fileInput = document.getElementById('iconFile');
+        let finalIcon = document.getElementById('existingIcon').value;
+
+        if(fileInput.files.length > 0) finalIcon = document.getElementById('imgPreview').src;
+        else if(!key && !finalIcon) {
+            const found = allData.find(([k, v]) => v.category === cat && v.icon);
+            if(found) finalIcon = found[1].icon;
+        }
+
+        if(!cat || !menu || !name || !url) { alert("Missing fields!"); return; }
+
+        let isLocked = false;
+        if(key) {
+             const existingItem = allData.find(i => i[0] === key);
+             if(existingItem) isLocked = existingItem[1].locked || false;
+        }
+
+        const payload = { category: cat, icon: finalIcon, topTab: topTab || "Mock Tests", subject: menu, subFilter: sub, chapter: name, link: url, locked: isLocked };
+        
+        if(key) {
+            db.ref('exams/'+key).update(payload).then(() => { alert("Updated!"); resetForm(); });
+        } else {
+            db.ref('exams').push(payload).then(() => { alert("Added!"); resetForm(); });
+        }
+    }
+
+    window.editSingleItem = function(key) {
+        const val = allData.find(i => i[0] === key)[1];
+        openTab('section-single');
+        document.getElementById('editKey').value = key;
+        document.getElementById('modeBadge').innerText = "Edit Mode";
+        document.getElementById('modeBadge').style.background = "#fbc531";
+        document.getElementById('catName').value = val.category;
+        document.getElementById('topTabInput').value = val.topTab || "Mock Tests";
+        document.getElementById('menuName').value = val.subject;
+        document.getElementById('subFilter').value = val.subFilter || "";
+        document.getElementById('chapterName').value = val.chapter;
+        document.getElementById('linkUrl').value = val.link;
+        document.getElementById('existingIcon').value = val.icon || "";
+        if(val.icon) {
+            document.getElementById('imgPreview').src = val.icon;
+            document.getElementById('imgPreview').style.display = "block";
+        }
+        document.getElementById('submitBtn').innerText = "Update Item";
+        document.getElementById('cancelBtn').style.display = "block";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.bulkLockAction = function(shouldLock) {
+        const cat = document.getElementById('toolLockCat').value;
+        if(!cat) return alert("Select Folder!");
+        if(!confirm(`Confirm ${shouldLock?'LOCK':'UNLOCK'} "${cat}"?`)) return;
+        let updates = {};
+        allData.forEach(([key, val]) => { if(val.category === cat) updates[`exams/${key}/locked`] = shouldLock; });
+        db.ref().update(updates).then(() => alert("Done!"));
+    }
+
+    window.bulkRenameCategory = function() {
+        const oldN = document.getElementById('toolOldCat').value;
+        const newN = document.getElementById('toolNewCat').value.trim();
+        if(!oldN || !newN) return alert("Invaild Input");
+        if(!confirm(`Rename "${oldN}" to "${newN}"?`)) return;
+        let updates = {};
+        allData.forEach(([key, val]) => { if(val.category === oldN) updates[`exams/${key}/category`] = newN; });
+        db.ref().update(updates).then(() => alert("Done!"));
+    }
+
+    window.bulkRenameTopTab = function() {
+        const cat = document.getElementById('toolTabCat').value;
+        const oldT = document.getElementById('toolOldTab').value;
+        const newT = document.getElementById('toolNewTab').value.trim();
+        if(!cat || !oldT || !newT) return alert("Invaild Input");
+        let updates = {};
+        allData.forEach(([key, val]) => { 
+            if(val.category === cat && (val.topTab||"Mock Tests") === oldT) updates[`exams/${key}/topTab`] = newT; 
+        });
+        db.ref().update(updates).then(() => { alert("Done!"); loadTopTabsForTool(); });
+    }
+
+    window.bulkUpdateIcon = function() {
+        const cat = document.getElementById('toolIconCat').value;
+        const file = document.getElementById('toolNewIconFile').files[0];
+        if(!cat || !file) return alert("Invaild Input");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if(!confirm(`Update Icon for "${cat}"?`)) return;
+            let updates = {};
+            allData.forEach(([key, val]) => { if(val.category === cat) updates[`exams/${key}/icon`] = e.target.result; });
+            db.ref().update(updates).then(() => alert("Done!"));
+        }
+        reader.readAsDataURL(file);
+    }
+
+    window.loadTopTabsForTool = function() {
+        const cat = document.getElementById('toolTabCat').value;
+        const sel = document.getElementById('toolOldTab');
+        sel.innerHTML = `<option value="">Select Old Tab</option>`;
+        if(!cat) return;
+        const items = allData.filter(([k,v]) => v.category === cat);
+        [...new Set(items.map(([k,v]) => v.topTab||"Mock Tests"))].forEach(t => sel.innerHTML+=`<option value="${t}">${t}</option>`);
+    }
+
+    function previewImage() {
+        const file = document.getElementById('iconFile').files[0];
+        const preview = document.getElementById('imgPreview');
+        const reader = new FileReader();
+        reader.onload = function(e) { preview.src = e.target.result; preview.style.display = "block"; }
+        if(file) reader.readAsDataURL(file);
+    }
+
+    window.deleteItem = function(key) { if(confirm("Delete?")) db.ref('exams/'+key).remove(); }
+
+    window.resetForm = function() {
+        document.getElementById('editKey').value = "";
+        document.querySelectorAll('input').forEach(i => i.value = "");
+        document.getElementById('imgPreview').style.display = "none";
+        document.getElementById('modeBadge').innerText = "Add New Mode";
+        document.getElementById('modeBadge').style.background = "#4361ee";
+        document.getElementById('submitBtn').innerText = "Save Single Entry";
+        document.getElementById('cancelBtn').style.display = "none";
+    }
+</script>
+
+</body>
+</html>

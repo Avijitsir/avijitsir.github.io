@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Exam Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #4361ee;
+            margin-bottom: 20px;
+            display: block;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus {
+            border-color: #4361ee;
+            outline: none;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #4361ee;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-primary:hover {
+            background: #3f37c9;
+        }
+        .toggle-text {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        .toggle-link {
+            color: #4361ee;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        #errorMsg {
+            color: #ef233c;
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <span class="logo">Exam Portal</span>
+    
+    <div id="errorMsg"></div>
+
+    <input type="email" id="email" placeholder="ইমেইল (Email)">
+    <input type="password" id="password" placeholder="পাসওয়ার্ড (Password)">
+    
+    <button class="btn-primary" id="mainBtn" onclick="handleAuth()">লগইন করুন</button>
+    
+    <div class="toggle-text">
+        <span id="toggleText">অ্যাকাউন্ট নেই?</span>
+        <span class="toggle-link" onclick="toggleMode()" id="toggleLink">রেজিস্টার করুন</span>
+    </div>
+</div>
+
+<script>
+    // 1. Firebase Configuration (আপনার আগের কনফিগ)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
+        authDomain: "mock-test-1eea6.firebaseapp.com",
+        databaseURL: "https://mock-test-1eea6-default-rtdb.firebaseio.com",
+        projectId: "mock-test-1eea6",
+        storageBucket: "mock-test-1eea6.firebaseapp.com",
+        messagingSenderId: "111849173136",
+        appId: "1:111849173136:web:8b211f58d854119e88a815",
+        measurementId: "G-5RLWPTP8YD"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // 2. Logic to Check if already logged in
+    // কেউ যদি আগে থেকেই লগইন করা থাকে, তবে তাকে সরাসরি index.html এ পাঠিয়ে দেব
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            window.location.replace("index.html");
+        }
+    });
+
+    // 3. Login/Register Toggle Logic
+    let isLoginMode = true;
+
+    function toggleMode() {
+        isLoginMode = !isLoginMode;
+        const mainBtn = document.getElementById('mainBtn');
+        const toggleText = document.getElementById('toggleText');
+        const toggleLink = document.getElementById('toggleLink');
+        const errorMsg = document.getElementById('errorMsg');
+
+        errorMsg.style.display = 'none';
+
+        if (isLoginMode) {
+            mainBtn.innerText = "লগইন করুন";
+            toggleText.innerText = "অ্যাকাউন্ট নেই?";
+            toggleLink.innerText = "রেজিস্টার করুন";
+        } else {
+            mainBtn.innerText = "অ্যাকাউন্ট খুলুন";
+            toggleText.innerText = "আগেই অ্যাকাউন্ট আছে?";
+            toggleLink.innerText = "লগইন করুন";
+        }
+    }
+
+    // 4. Handle Auth (Login or Signup)
+    function handleAuth() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('errorMsg');
+
+        if(password.length < 6) {
+            errorDiv.innerText = "পাসওয়ার্ড অন্তত ৬ সংখ্যার হতে হবে।";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        const btn = document.getElementById('mainBtn');
+        btn.innerText = "অপেক্ষা করুন...";
+        btn.disabled = true;
+
+        if (isLoginMode) {
+            // Login Logic
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // সফল হলে onAuthStateChanged অটোমেটিক index.html এ নিয়ে যাবে
+                })
+                .catch((error) => {
+                    btn.innerText = "লগইন করুন";
+                    btn.disabled = false;
+                    errorDiv.style.display = 'block';
+                    if(error.code === 'auth/user-not-found') errorDiv.innerText = "এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি।";
+                    else if(error.code === 'auth/wrong-password') errorDiv.innerText = "ভুল পাসওয়ার্ড।";
+                    else errorDiv.innerText = "এরর: " + error.message;
+                });
+        } else {
+            // Register Logic
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // সফল হলে onAuthStateChanged অটোমেটিক index.html এ নিয়ে যাবে
+                })
+                .catch((error) => {
+                    btn.innerText = "অ্যাকাউন্ট খুলুন";
+                    btn.disabled = false;
+                    errorDiv.style.display = 'block';
+                    if(error.code === 'auth/email-already-in-use') errorDiv.innerText = "এই ইমেইলটি আগেই ব্যবহার করা হয়েছে।";
+                    else errorDiv.innerText = "এরর: " + error.message;
+                });
+        }
+    }
+</script>
+
+</body>
+</html>
