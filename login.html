@@ -93,12 +93,8 @@
     const firebaseConfig = {
         apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
         authDomain: "mock-test-1eea6.firebaseapp.com",
-        databaseURL: "https://mock-test-1eea6-default-rtdb.firebaseio.com",
         projectId: "mock-test-1eea6",
-        storageBucket: "mock-test-1eea6.firebaseapp.com",
-        messagingSenderId: "111849173136",
-        appId: "1:111849173136:web:8b211f58d854119e88a815",
-        measurementId: "G-5RLWPTP8YD"
+        appId: "1:111849173136:web:8b211f58d854119e88a815"
     };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -119,7 +115,7 @@
         
         auth.signInWithPopup(provider)
             .then((result) => {
-                // সফল হলে অটোমেটিক index.html এ চলে যাবে (onAuthStateChanged এর মাধ্যমে)
+                // সফল হলে অটোমেটিক index.html এ চলে যাবে
             })
             .catch((error) => {
                 console.error(error);
