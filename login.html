@@ -13,24 +13,9 @@
         body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; }
         .login-card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 350px; text-align: center; }
         .logo { font-size: 26px; font-weight: 800; color: #4361ee; margin-bottom: 10px; display: block; }
-        
-        /* বাটনের ডিজাইন */
         .google-btn { width: 100%; padding: 12px; background: white; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .google-btn:hover { background: #f8f9fa; border-color: #c1c1c1; }
-
-        /* ওয়ার্নিং বক্স (হোয়াটসঅ্যাপের জন্য) */
-        #browserWarning { 
-            display: none; 
-            background: #fff3cd; 
-            color: #856404; 
-            padding: 15px; 
-            border: 1px solid #ffeeba; 
-            border-radius: 8px; 
-            font-size: 14px; 
-            line-height: 1.6;
-            margin-top: 10px;
-        }
-        .instruction-step { text-align: left; margin-top: 10px; font-size: 13px; }
+        #browserWarning { display: none; background: #fff3cd; color: #856404; padding: 15px; border: 1px solid #ffeeba; border-radius: 8px; font-size: 14px; margin-top: 10px; text-align: left; }
         #errorMsg { color: #ef233c; font-size: 13px; margin-top: 15px; display: none; }
     </style>
 </head>
@@ -41,36 +26,22 @@
     
     <div id="loginSection">
         <p style="color:#666; font-size:14px; margin-bottom:30px;">পরীক্ষা দিতে নিচে ক্লিক করুন</p>
-        <button class="google-btn" onclick="googleLogin()">
+        <button class="google-btn" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;">
             Google দিয়ে লগইন করুন
         </button>
     </div>
 
     <div id="browserWarning">
-        <strong>⚠️ ব্রাউজার সমস্যা!</strong><br>
-        এখানে লগইন কাজ করবে না। দয়া করে ক্রোম (Chrome) ব্যবহার করুন।
-        <div class="instruction-step">
-            ১. ওপরের ডানদিকের <b>তিনটি ডট (⋮)</b> এ ক্লিক করুন।<br>
-            ২. <b>"Open in Chrome"</b> বা <b>"Open Browser"</b> সিলেক্ট করুন।
-        </div>
+        ⚠️ <strong>ব্রাউজার সমস্যা!</strong><br>
+        এখানে লগইন হবে না। দয়া করে ওপরের ৩ ডটে ক্লিক করে <b>Open in Chrome</b> সিলেক্ট করুন।
     </div>
     
     <div id="errorMsg"></div>
 </div>
 
 <script>
-    // --- ১. ব্রাউজার চেক করা (In-App Browser Check) ---
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("WhatsApp") > -1);
-
-    if (isInApp) {
-        // হোয়াটসঅ্যাপ বা ফেসবুক হলে লগইন বাটন লুকানো হবে
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('browserWarning').style.display = 'block';
-    }
-
-    // --- ২. Firebase কনফিগ ---
+    // --- 1. কনফিগ ---
     const firebaseConfig = {
         apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
         authDomain: "mock-test-1eea6.firebaseapp.com",
@@ -81,32 +52,42 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // --- ৩. লগইন লজিক ---
-    // আগে লগইন থাকলে সরাসরি পাঠিয়ে দেবে
+    // --- 2. ডিভাইস চেক ---
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isInApp = /FBAN|FBAV|Instagram|WhatsApp/.test(navigator.userAgent);
+
+    if (isInApp) {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('browserWarning').style.display = 'block';
+    }
+
+    // --- 3. লগইন স্ট্যাটাস চেক ---
     auth.onAuthStateChanged(user => {
         if (user) {
             window.location.replace("index.html");
         }
     });
 
-    function googleLogin() {
+    // --- 4. মোবাইল রিডাইরেক্ট রেজাল্ট হ্যান্ডলিং ---
+    auth.getRedirectResult().catch((error) => {
+        document.getElementById('errorMsg').style.display = 'block';
+        document.getElementById('errorMsg').innerText = "Mobile Error: " + error.message;
+    });
+
+    // --- 5. হাইব্রিড লগইন ফাংশন ---
+    function handleLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        const errorDiv = document.getElementById('errorMsg');
         
-        // আমরা আবার POPUP মেথডে ফিরে যাচ্ছি কারণ এটি পিসিতে কাজ করে
-        auth.signInWithPopup(provider)
-            .then((result) => {
-                // সফল হলে onAuthStateChanged অটোমেটিক নিয়ে যাবে
-            })
-            .catch((error) => {
-                errorDiv.style.display = 'block';
-                // মোবাইলে পপআপ ব্লক হলে এই মেসেজ দেখাবে
-                if(error.code === 'auth/popup-blocked') {
-                    errorDiv.innerHTML = "পপ-আপ ব্লক করা হয়েছে। দয়া করে <b>Open in Chrome</b> ব্যবহার করুন।";
-                } else {
-                    errorDiv.innerText = "এরর: " + error.message;
-                }
+        if (isMobile) {
+            // মোবাইল হলে Redirect ব্যবহার করবে (সাদা স্ক্রিন বা পপআপ ব্লক হবে না)
+            auth.signInWithRedirect(provider);
+        } else {
+            // পিসি হলে Popup ব্যবহার করবে (লুপ হবে না)
+            auth.signInWithPopup(provider).catch((error) => {
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorMsg').innerText = "PC Error: " + error.message;
             });
+        }
     }
 </script>
 
