@@ -10,78 +10,23 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .login-card {
-            background: white;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
-        }
-        .logo {
-            font-size: 26px;
-            font-weight: 800;
-            color: #4361ee;
-            margin-bottom: 10px;
-            display: block;
-        }
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
-        .google-btn {
-            width: 100%;
-            padding: 12px;
-            background: white;
-            color: #333;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .google-btn:hover {
-            background: #f8f9fa;
-            border-color: #c1c1c1;
-        }
-        .google-btn img {
-            width: 20px;
-            height: 20px;
-        }
-        #errorMsg {
-            color: #ef233c;
-            font-size: 14px;
-            margin-top: 15px;
-            display: none;
-        }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 350px; text-align: center; }
+        .logo { font-size: 26px; font-weight: 800; color: #4361ee; margin-bottom: 10px; display: block; }
+        .google-btn { width: 100%; padding: 12px; background: white; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .google-btn:hover { background: #f8f9fa; border-color: #c1c1c1; }
+        .google-btn img { width: 20px; height: 20px; }
+        #errorMsg { color: #ef233c; font-size: 14px; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="login-card">
     <span class="logo">Exam Portal</span>
-    <div class="subtitle">পরীক্ষা দিতে নিচে ক্লিক করে লগইন করুন</div>
+    <p style="color:#666; font-size:14px; margin-bottom:30px;">পরীক্ষা দিতে নিচে ক্লিক করুন</p>
     
     <button class="google-btn" onclick="googleLogin()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
         Google দিয়ে লগইন করুন
     </button>
     
@@ -89,7 +34,6 @@
 </div>
 
 <script>
-    // 1. Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyDwGzTPmFg-gjoYtNWNJM47p22NfBugYFA",
         authDomain: "mock-test-1eea6.firebaseapp.com",
@@ -100,28 +44,24 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // 2. Check Login Status
-    // আগেই লগইন করা থাকলে সরাসরি হোম পেজে পাঠিয়ে দেবে
+    // 1. লগইন স্ট্যাটাস চেক (Redirect হয়ে ফিরে আসার পর এটি কাজ করবে)
     auth.onAuthStateChanged(user => {
         if (user) {
             window.location.replace("index.html");
         }
     });
 
-    // 3. Google Login Function
+    // 2. এরর হ্যান্ডলিং (Redirect থেকে কোনো এরর এলে এখানে ধরা পড়বে)
+    auth.getRedirectResult().catch((error) => {
+        document.getElementById('errorMsg').style.display = 'block';
+        document.getElementById('errorMsg').innerText = "সমস্যা হয়েছে: " + error.message;
+    });
+
+    // 3. নতুন লগইন ফাংশন (Popup এর বদলে Redirect)
     function googleLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        const errorDiv = document.getElementById('errorMsg');
-        
-        auth.signInWithPopup(provider)
-            .then((result) => {
-                // সফল হলে অটোমেটিক index.html এ চলে যাবে
-            })
-            .catch((error) => {
-                console.error(error);
-                errorDiv.style.display = 'block';
-                errorDiv.innerText = "সমস্যা হয়েছে: " + error.message;
-            });
+        // এটি পেজ রিফ্রেশ করে গুগলে নিয়ে যাবে, পপআপ খুলবে না
+        auth.signInWithRedirect(provider);
     }
 </script>
 
